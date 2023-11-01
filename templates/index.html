@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/styles.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <title>Title</title>
+</head>
+<body>
+    <h1 class="page-header">Hello, World!</h1>
+    <div class="toggle-button-wrapper">
+        <form method="post">
+            <button type="submit" class="toggle-button">{{ 'ON' if btnstate else 'OFF' }}</button>
+        </form>
+    </div>
+
+    <script>
+        $('.toggle-button').css('background-color', ('{{ btnstate }}' === 'True') ? '#8cde8c' : '#6f786f')
+    </script>
+</body>
+</html>
