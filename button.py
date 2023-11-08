@@ -35,7 +35,7 @@ if __name__ == '__main__':
     qr.add_data(f'http://{server}:8090')
     qr.make(fit=True)
     img = qr.make_image(fill_color="black", back_color="white")
-    img.save("qrcode.png")
+    # img.save("qrcode.png")
 
     # sock.connect((host, port))
     # print(f"Connecting to {host} on port {port}...")
