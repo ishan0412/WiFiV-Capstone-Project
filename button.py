@@ -8,7 +8,7 @@ from qrcode import QRCode
 app = Flask(__name__)
 
 # sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-host = '192.168.224.182'
+host = '192.168.224.40'
 # server = '10.91.64.30'
 server = '192.168.224.224'
 port = 80
@@ -24,7 +24,7 @@ def index():
         btnstate = not btnstate
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((host, port))
-            sock.send(127)
+            sock.send(b'1' if btnstate else b'0')
     print(btnstate)
     return render_template('index.html', btnstate=btnstate)
 

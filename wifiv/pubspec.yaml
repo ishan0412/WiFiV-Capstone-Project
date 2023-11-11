@@ -35,11 +35,13 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
-  network_discovery: ^1.0.0
-  network_info_plus: ^4.1.0
-  lan_scanner: ^3.5.0
-  network_tools: ^3.0.0+3
-  web_socket_channel: ^2.4.0
+  tcp_socket_connection: ^0.3.1
+  sqflite: ^2.3.0
+  # network_discovery: ^1.0.0
+  # network_info_plus: ^4.1.0
+  # lan_scanner: ^3.5.0
+  # network_tools: ^3.0.0+3
+  # web_socket_channel: ^2.4.0
 
 dev_dependencies:
   flutter_test:
