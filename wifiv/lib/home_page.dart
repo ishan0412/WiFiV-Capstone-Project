@@ -65,9 +65,11 @@ class _HomePageState extends State<HomePage> {
                 if (snapshot.data == null) {
                   return const HomePageLoading();
                 }
-                List<Text> allPumpsInfo = [
+                List<Widget> allPumpsInfo = [
                   for (Pump e in snapshot.data!) Text(e.toString())
                 ];
+                allPumpsInfo.add(CustomNumberInput(
+          senderCallback: ((value) => socket.sendMessage(value.toString()))));
                 return Scaffold(body: Column(children: allPumpsInfo));
               });
         });

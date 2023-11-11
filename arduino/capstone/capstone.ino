@@ -1,5 +1,4 @@
 #include <WiFi.h>
-// #include <ESP8266WiFi.h>
 
 // Username and password to connect to microcontroller:
 const char* ssid = "Samsung Galaxy S10e_7644";
@@ -13,13 +12,11 @@ WiFiServer server(80); // fixes port of server to 5000
 
 String header; // stores HTTP request
 const int OUTPIN = 22; // digital output pin
-
-// Current time
-// unsigned long currentTime = millis();
-// Previous time
-// unsigned long previousTime = 0; 
-// Define timeout time in milliseconds (example: 2000ms = 2s)
-// const long timeoutTime = 2000;
+const int MAX_CLIENT_COUNT = 4;
+WiFiClient clientList[MAX_CLIENT_COUNT]; // list of currently connected clients, 
+// up to 4 allowed
+int clientCount = 0;
+// !!! VTBI, dosage, current channel, and current drug should all be variables stored here:
 
 void setup() {
   Serial.begin(115200);
@@ -48,17 +45,50 @@ void setup() {
 }
 
 void loop() {
-  WiFiClient client = server.available();
-  if (client) {    
-    Serial.println("New client!");
-     if (client.read() == '1') {
-       analogWrite(OUTPIN, 1023);
-       Serial.println("high");
-     } else {
-       analogWrite(OUTPIN, 100);
-       Serial.println("low");
-     }
-    // delay(1000);
-    // Serial.println(client.read());                      
+  WiFiClient client;
+  if ((client = server.available()) && (clientCount < MAX_CLIENT_COUNT)) {
+//    bool clientAlrConnected = false;
+//    int index = 0;
+//    while ((!clientAlrConnected) && (index < clientCount)) {
+//      clientAlrConnected = client.remoteIP() == clientList[index].remoteIP();
+//    }
+//    if (!clientAlrConnected) {
+      clientList[clientCount] = client;
+      clientCount++;
+      Serial.print("New client at IP ");
+      Serial.println(client.remoteIP());
+      Serial.print("Current number of clients: ");
+      Serial.println(clientCount);
+//    }
+  } else {
+    for (int index = 0; index < clientCount; index++) {
+      client = clientList[index];
+      if (client.connected()) {
+        String recvBuffer = "";
+        while (client.available()) {
+          recvBuffer += (char) client.read();
+        }
+        if (recvBuffer != "") {
+          int valueToWrite = recvBuffer.toInt();
+          Serial.print(client.remoteIP());
+          Serial.print(": ");
+          Serial.println(valueToWrite);
+
+          // valueToWrite: value of the analog pin used to control the pump
+          // MOTOR CONTROL CODE HERE:
+          
+          // END CODE
+        }
+      } else {
+        Serial.print("Disconnected client at IP ");
+        Serial.println(client.remoteIP());
+        clientList[index] = NULL;
+        for (int secondIndex = index + 1; secondIndex < clientCount; secondIndex++) {
+          clientList[secondIndex - 1] = clientList[secondIndex];
+        }
+        clientCount--;
+      }
+    }
   }
+  delay(100);
 }
