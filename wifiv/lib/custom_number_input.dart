@@ -100,6 +100,7 @@ class CustomNumberInput extends StatefulWidget {
 
 class _CustomNumberInputState extends State<CustomNumberInput> {
   final TextEditingController _controller = TextEditingController();
+  bool numPadIsActive = false;
 
   void onNumericKeyPress(int number) {
     _controller.text += number.toString();
@@ -136,12 +137,21 @@ class _CustomNumberInputState extends State<CustomNumberInput> {
   @override
   Widget build(BuildContext context) {
     return Column(children: [
-      SizedBox(height: 100, child: TextField(controller: _controller)),
-      CustomNumPad(
-          onNumericKeyPress: onNumericKeyPress,
-          onBackKeyPress: onBackKeyPress,
-          onSubmitKeyPress: onSubmitKeyPress,
-          onDecimalKeyPress: onDecimalKeyPress)
+      SizedBox(
+          height: 50,
+          // child: GestureDetector(
+          // onTap: () => setState(() => numPadIsActive = true),
+          child: TextField(
+              controller: _controller,
+              readOnly: true,
+              onTap: () => setState(() => numPadIsActive = true))),
+      numPadIsActive
+          ? CustomNumPad(
+              onNumericKeyPress: onNumericKeyPress,
+              onBackKeyPress: onBackKeyPress,
+              onSubmitKeyPress: onSubmitKeyPress,
+              onDecimalKeyPress: onDecimalKeyPress)
+          : const Text('Enter value')
     ]);
   }
 }

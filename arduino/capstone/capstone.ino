@@ -11,7 +11,9 @@ WiFiServer server(80); // fixes port of server to 5000
 // IPAddress SUBNET(255, 255, 0, 0);
 
 String header; // stores HTTP request
-const int OUTPIN = 22; // digital output pin
+const int MOTOR_CONTROL_PIN = 14; // analog pin to control the motor
+const int MOTOR_POWER_HIGH = 26;
+const int MOTOR_POWER_LOW = 27;
 const int MAX_CLIENT_COUNT = 4;
 WiFiClient clientList[MAX_CLIENT_COUNT]; // list of currently connected clients, 
 // up to 4 allowed
@@ -20,9 +22,12 @@ int clientCount = 0;
 
 void setup() {
   Serial.begin(115200);
-  pinMode(OUTPIN, OUTPUT);
-  analogWrite(OUTPIN, 0);
-
+  pinMode(MOTOR_CONTROL_PIN, OUTPUT);
+  analogWrite(MOTOR_CONTROL_PIN, 0);
+  pinMode(MOTOR_POWER_HIGH, OUTPUT);
+  pinMode(MOTOR_POWER_LOW, OUTPUT);
+  digitalWrite(MOTOR_POWER_HIGH, LOW);
+  digitalWrite(MOTOR_POWER_LOW, LOW);
   // Connect to Wi-Fi with SSID and password:
   Serial.print("Connecting to ");
   Serial.print(ssid);
@@ -76,7 +81,7 @@ void loop() {
 
           // valueToWrite: value of the analog pin used to control the pump
           // MOTOR CONTROL CODE HERE:
-          
+          setMotorAnalogValue(valueToWrite);
           // END CODE
         }
       } else {
@@ -91,4 +96,15 @@ void loop() {
     }
   }
   delay(100);
+}
+
+void setMotorAnalogValue(int analogPinValue) {
+  if (analogPinValue == 0) {
+     digitalWrite(MOTOR_POWER_HIGH, LOW);
+     digitalWrite(MOTOR_POWER_LOW, LOW);
+  } else {
+    digitalWrite(MOTOR_POWER_HIGH, HIGH);
+    digitalWrite(MOTOR_POWER_LOW, LOW);
+    analogWrite(MOTOR_CONTROL_PIN, analogPinValue);
+  } 
 }
