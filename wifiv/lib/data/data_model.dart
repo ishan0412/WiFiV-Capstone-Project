@@ -89,6 +89,10 @@ class Pump {
     return 'Pump${toMap()}';
   }
 
+  bool equals(Pump otherPump) {
+    return (id == otherPump.id);
+  }
+
   static Pump fromMap(Map<String, dynamic> pumpAsMap) {
     return Pump(
         id: pumpAsMap['id'] as int,
@@ -97,10 +101,13 @@ class Pump {
         patientName: pumpAsMap['patientName'] as String,
         currentRate: pumpAsMap['currentRate'] as double,
         currentVtbi: pumpAsMap['currentVtbi'] as double,
-        pumpChangeLog: [
-          for (Map<String, dynamic> e in jsonDecode(pumpAsMap['pumpChangeLog']))
-            PumpChangeEntry.fromJson(e)
-        ]);
+        pumpChangeLog: (pumpAsMap['pumpChangeLog'] != null)
+            ? [
+                for (Map<String, dynamic> e
+                    in jsonDecode(pumpAsMap['pumpChangeLog']))
+                  PumpChangeEntry.fromJson(e)
+              ]
+            : []);
   }
 }
 

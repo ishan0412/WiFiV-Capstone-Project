@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'data_model.dart';
 
 class DataService {
@@ -10,6 +11,8 @@ class DataService {
 
   static Future<DataService> connectToDatabase() async {
     WidgetsFlutterBinding.ensureInitialized();
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
     Database database = await openDatabase(
         join(await getDatabasesPath(), 'pump_settings_database.db'),
         onCreate: (db, version) {
@@ -31,6 +34,16 @@ class DataService {
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+  Future<void> updatePump(Pump pump) async {
+    await database.update('pumps', pump.toMap(), where: 'id = ${pump.id}');
+  }
+
+  // Future<void> updatePumpOnlyRateAndVtbi(Pump pump) async {
+  //   await database.update('pumps',
+  //       {'currentRate': pump.currentRate, 'currentVtbi': pump.currentVtbi},
+  //       where: 'id = ${pump.id}');
+  // }
+
   Future<Pump> getPumpById(int id) async {
     return Pump.fromMap(
         (await database.query('pumps', distinct: true, where: 'id = $id'))[0]);
@@ -40,6 +53,10 @@ class DataService {
     final List<Map<String, dynamic>> pumpsAsMaps =
         await database.query('pumps');
     return pumpsAsMaps.map(Pump.fromMap);
+  }
+
+  Future<Map<int, Pump>> getDatabaseAsDict() async {
+    return {for (Pump e in (await getAllPumps())) e.id: e};
   }
 
   Future<Map<int, String>> getAllPumpIpAddresses() async {

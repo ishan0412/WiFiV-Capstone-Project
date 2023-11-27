@@ -11,6 +11,7 @@ WiFiServer server(80); // fixes port of server to 5000
 // IPAddress SUBNET(255, 255, 0, 0);
 
 String header; // stores HTTP request
+// char* bufferToSend; // all messages to send are stored here
 const int MOTOR_CONTROL_PIN = 14; // analog pin to control the motor
 const int MOTOR_POWER_HIGH = 26;
 const int MOTOR_POWER_LOW = 27;
@@ -19,6 +20,15 @@ WiFiClient clientList[MAX_CLIENT_COUNT]; // list of currently connected clients,
 // up to 4 allowed
 int clientCount = 0;
 // !!! VTBI, dosage, current channel, and current drug should all be variables stored here:
+// int thisPumpId = -1; // lower 8 bits of IP address; if the pump didn't connect to wifi, this'll stay -1
+
+// CHANGE THESE FOR EACH PUMP:
+int thisPumpId = 2;  // unique to each pump
+String drugName = "VASOPRESSIN";
+////////////////////////////
+
+double currentRate = 0;
+double currentVtbi = 0;
 
 void setup() {
   Serial.begin(115200);
@@ -43,9 +53,13 @@ void setup() {
   // if (!WiFi.config(LOCAL_IP, GATEWAY, SUBNET)) {
     // Serial.println("STA Failed to configure");
   // }
-  
+
+  IPAddress thisPumpIp = WiFi.localIP();
   Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
+  Serial.println(thisPumpIp);
+//  thisPumpId = thisPumpIp[3];
+//  Serial.print("This pump's ID: ");
+  Serial.println(thisPumpId);
   server.begin();
 }
 
@@ -58,12 +72,15 @@ void loop() {
 //      clientAlrConnected = client.remoteIP() == clientList[index].remoteIP();
 //    }
 //    if (!clientAlrConnected) {
+
       clientList[clientCount] = client;
       clientCount++;
       Serial.print("New client at IP ");
       Serial.println(client.remoteIP());
       Serial.print("Current number of clients: ");
       Serial.println(clientCount);
+      sendDataAsJson(client);
+      Serial.println("Sent data to new client.");
 //    }
   } else {
     for (int index = 0; index < clientCount; index++) {
@@ -74,15 +91,24 @@ void loop() {
           recvBuffer += (char) client.read();
         }
         if (recvBuffer != "") {
-          int valueToWrite = recvBuffer.toInt();
+          // int valueToWrite = recvBuffer.toInt();
+          char targetSetting = recvBuffer.charAt(recvBuffer.length() - 1);
+          double valueToWrite = recvBuffer.substring(0, recvBuffer.length() - 1).toDouble();
           Serial.print(client.remoteIP());
-          Serial.print(": ");
+          if (targetSetting == 'r') {
+            Serial.print(" RATE: ");
+            currentRate = valueToWrite;
+            // valueToWrite: value of the analog pin used to control the pump
+            // MOTOR CONTROL CODE HERE:
+            setMotorAnalogValue(valueToWrite);
+            // END CODE
+          } else {
+            Serial.print(" VTBI: ");
+            currentVtbi = valueToWrite;
+          }
+          // TODO: implement handling for rate vs vtbi inputs:
           Serial.println(valueToWrite);
-
-          // valueToWrite: value of the analog pin used to control the pump
-          // MOTOR CONTROL CODE HERE:
-          setMotorAnalogValue(valueToWrite);
-          // END CODE
+          broadcastDataUpdateBy(client, targetSetting);
         }
       } else {
         Serial.print("Disconnected client at IP ");
@@ -99,6 +125,10 @@ void loop() {
 }
 
 void setMotorAnalogValue(int analogPinValue) {
+  // put dosage-to-voltage conversion here:
+
+  // END CODE
+  
   if (analogPinValue == 0) {
      digitalWrite(MOTOR_POWER_HIGH, LOW);
      digitalWrite(MOTOR_POWER_LOW, LOW);
@@ -107,4 +137,28 @@ void setMotorAnalogValue(int analogPinValue) {
     digitalWrite(MOTOR_POWER_LOW, LOW);
     analogWrite(MOTOR_CONTROL_PIN, analogPinValue);
   } 
+}
+
+// TODO: support for updating rate AND vtbi (additional type
+// "rate" | "vtbi" parameter in following method)
+void broadcastDataUpdateBy(WiFiClient updatingClient, char targetSetting) {
+  for (int index = 0; index < clientCount; index++) {
+    WiFiClient currClient = clientList[index];
+     if (currClient.remoteIP() != updatingClient.remoteIP()) {
+      currClient.write((String(thisPumpId) + " " 
+      + String((targetSetting == 'r') ? currentRate : currentVtbi) 
+      + targetSetting).c_str());
+     }
+    // Serial.println("Broadcasted data update.");
+  }
+}
+
+void sendDataAsJson(WiFiClient client) {
+  String dataToSend = "{\"id\": " + String(thisPumpId) 
+  + ", \"ipAddress\": \"" + WiFi.localIP().toString() 
+  + "\", \"drugName\": \"" + drugName 
+  + "\", \"patientName\": \"" + "" 
+  + "\", \"currentRate\": " + String(currentRate) 
+  + ", \"currentVtbi\": " + String(currentVtbi) + "}";
+  client.write(dataToSend.c_str());
 }

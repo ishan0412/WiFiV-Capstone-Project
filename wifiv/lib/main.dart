@@ -1,207 +1,106 @@
 import 'package:flutter/material.dart';
-import 'package:wifiv/homepage_controller.dart';
-// import 'keyvalue_service.dart';
-// import 'custom_number_input.dart';
-import 'package:tcp_socket_connection/tcp_socket_connection.dart';
-import 'package:wifiv/keyvalue_service.dart';
-import 'data_service.dart';
-import 'data_model.dart';
-import 'infodisplays.dart';
-// import 'dart:convert';
+import 'data/keyvalue_service.dart';
+import 'data/data_service.dart';
+import 'data/data_model.dart';
+import 'titrationsettings_view.dart';
 
-// /// TODO: Database storing each patient and pump along with their connection info (IP/port), medication, patient name, pump edit history, etc.
-// ///
-const String controllerIP =
-    '192.168.224.40'; // will prob be dynamically obtained/updated
-const int controllerPort = 80; // will always be 80?
-const int connectionTimeout =
-    5000; // 5 seconds until app gives up connecting to microcontroller
-
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // KeyValueService keyValueStore = await KeyValueService.openKeyValueStore();
+  // keyValueStore.setCurrentlyActivePumpId(0);
   // DataService database = await DataService.connectToDatabase();
-  // print(await database.getAllPumpIpAddresses());
+  // database.clearDatabase();
   // Pump testPump = Pump(
-  //     id: 1,
-  //     ipAddress: '192.168.224.40',
-  //     drugName: 'Norepinephrine',
-  //     patientName: 'Bonscii');
+  //     id: 0,
+  //     ipAddress: '192.168.224.196',
+  //     drugName: 'Adrenaline',
+  //     patientName: 'Pauleh');
   // database.insertPump(testPump);
-  // print(testPump);
-  // testPump = testPump.changeRate(100);
-  // testPump = testPump.changeVtbi(100);
-  // print(Pump.fromMap(testPump.toMap()));
-  // print(jsonDecode(jsonEncode(testPump.pumpChangeLog.map((e) => e.toJson()).toList())));
   runApp(const MyApp());
 }
-
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return const MaterialApp(home: HomePageController());
-//   }
-// }
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
-  _MyAppState createState() => _MyAppState();
+  MyAppState createState() => MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class MyAppState extends State<MyApp> {
   Future<DataService> database = DataService.connectToDatabase();
   Future<KeyValueService> keyValueStore = KeyValueService.openKeyValueStore();
 
-  @override
-  void initState() {
-    super.initState();
-    initConnection();
+  void setPumpDripRate(int pumpId, double updatedRate) async {
+    DataService awaitedDatabase = await database;
+    awaitedDatabase.updatePump(
+        (await awaitedDatabase.getPumpById(pumpId)).changeRate(updatedRate));
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-    socket.disconnect();
+  void setPumpVtbi(int pumpId, double updatedVtbi) async {
+    DataService awaitedDatabase = await database;
+    awaitedDatabase.updatePump(
+        (await awaitedDatabase.getPumpById(pumpId)).changeVtbi(updatedVtbi));
   }
 
-  void initConnection() async {
-    socket.enableConsolePrint(true);
-    if (await socket.canConnect(connectionTimeout)) {
-      await socket.connect(connectionTimeout, () => {});
-    } else {
-      print('Failed to connect to $controllerIP.');
-    }
+  // void updatePumpOnlyRateAndVtbi(Pump updatedPump) async {
+  //   // ! NOTE: probably clears pump update log
+  //   (await database).updatePumpOnlyRateAndVtbi(updatedPump);
+  // }
+
+  void updatePumpOnlyRateAndVtbi(Pump updatedPump) async {
+    // ! NOTE: probably clears pump update log
+    (await database).updatePump(updatedPump);
   }
-  // // Future<TcpSocketConnection socket =
-  // //     TcpSocketConnection(controllerIP, controllerPort);
-  // Map<int, TcpSocketConnection>? connectedSockets;
-  // Future<DataService> database = DataService.connectToDatabase();
-  // Future<KeyValueService> keyValueStore = KeyValueService.openKeyValueStore();
-  bool loadOnTimeout = true;
-  // // bool loadOnTimeout = true;
 
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   initConnections();
-  // }
+  void addPump(Pump addedPump) async {
+    (await database).insertPump(addedPump);
+    // (await keyValueStore).setCurrentlyActivePumpId(addedPump.id);
+  }
 
-  // @override
-  // void dispose() {
-  //   for (int key in connectedSockets!.keys) {
-  //     connectedSockets![key]!.disconnect();
-  //   }
-  //   super.dispose();
-  // }
-
-  // void connectToPump(int pumpId, String pumpIpAddress) {
-  //   TcpSocketConnection socket =
-  //       TcpSocketConnection(pumpIpAddress, controllerPort);
-  //   // socket.connect(connectionTimeout, () => connectedSockets![pumpId] = socket);
-  // }
-
-  // void disconnectFromPump(int pumpId) {
-  //   connectedSockets![pumpId]!.disconnect();
-  //   connectedSockets!.remove(pumpId);
-  // }
-
-  // void initConnections() async {
-  //   // Map<int, String> connectedIpAddresses =
-  //   //     await database.then((value) => value.getAllPumpIpAddresses());
-  //   // Future.delayed(
-  //   //     const Duration(seconds: 1), () => setState(() => loadOnTimeout = true));
-  //   // for (int key in connectedIpAddresses.keys) {
-  //   //   TcpSocketConnection socket =
-  //   //       TcpSocketConnection(connectedIpAddresses[key]!, controllerPort);
-  //   //   socket.enableConsolePrint(true);
-  //   //   if (await socket.canConnect(connectionTimeout)) {
-  //   //     await socket.connect(
-  //   //         connectionTimeout, () => {connectedSockets![key] = socket});
-  //   //     print(connectedSockets);
-  //   //   } else {
-  //   //     print('Failed to connect to ${connectedIpAddresses[key]}.');
-  //   //   }
-  //   // }
-
-  //   connectedSockets = connectedSockets ?? {};
-
-  TcpSocketConnection socket =
-      TcpSocketConnection(controllerIP, controllerPort);
-  // Future<DataService> database = DataService.connectToDatabase();
-  // Future<KeyValueService> keyValueStore = KeyValueService.openKeyValueStore();
-
-  void sendValueToPump(int targetPumpId, int value) {
-    print('Attempting to send value $value to pump $targetPumpId...');
-    // if (connectedSockets != null) {
-    //   TcpSocketConnection? socket = connectedSockets![targetPumpId];
-    //   if (socket == null) {
-    //     print('The app is currently not connected to pump $targetPumpId.');
-    //   } else {
-    //     print('Successfully sent message!');
-    //     socket.sendMessage(value.toString());
-    //   }
-    // }
-    socket.sendMessage(value.toString());
+  void selectPump(int selectedPumpId) async {
+    (await keyValueStore).setCurrentlyActivePumpId(selectedPumpId);
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        home: FutureBuilder(
-            future: Future.wait([database, keyValueStore]),
-            builder: (context, snapshot) {
-              if (!(snapshot.hasData && loadOnTimeout)) {
-                return const MaterialApp(home: StartupLoadingPage());
-              }
-              DataService awaitedDatabase = snapshot.data![0] as DataService;
-              KeyValueService awaitedKeyValueStore =
-                  snapshot.data![1] as KeyValueService;
-              print('Opened database and key-value store.');
-              return FutureBuilder(
-                  future: Future.wait([
-                    awaitedDatabase.getAllPumps(),
-                    awaitedKeyValueStore.getCurrentlyActivePumpId()
-                  ]),
-                  builder: (context, snapshot) {
-                    if (!(snapshot.hasData && loadOnTimeout)) {
-                      return const MaterialApp(home: StartupLoadingPage());
-                    }
-                    List<Pump> allPumpsList =
-                        (snapshot.data![0] as Iterable<Pump>).toList();
-                    int currentlyActivePumpId = snapshot.data![1] as int;
-                    print(
-                        'Queried list of pumps and currently active pump\'s ID.');
-                    return FutureBuilder(
-                        future:
-                            awaitedDatabase.getPumpById(currentlyActivePumpId),
-                        builder: (context, snapshot) {
-                          if (!(snapshot.hasData && loadOnTimeout)) {
-                            return const MaterialApp(
-                                home: StartupLoadingPage());
-                          }
-                          print(
-                              'Got the currently active pump\'s info: ${snapshot.data!}');
-                          return ActivePumpInfo(
-                              activePumpOnStartup: snapshot.data!,
-                              database: awaitedDatabase,
-                              keyValueStore: awaitedKeyValueStore,
-                              pumpListOnStartup: allPumpsList,
-                              onSubmitValueCallback: (value) => sendValueToPump(
-                                  currentlyActivePumpId, value));
-                        });
-                  });
-            }));
+        home: Scaffold(
+            body: FutureBuilder(
+      future: Future.wait([database, keyValueStore]),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const StartupLoadingScreen();
+        }
+        DataService awaitedDatabase = snapshot.data![0] as DataService;
+        KeyValueService keyValueStore = snapshot.data![1] as KeyValueService;
+        return FutureBuilder(
+          future: Future.wait([
+            awaitedDatabase.getDatabaseAsDict(),
+            keyValueStore.getCurrentlyActivePumpId()
+          ]),
+          builder: (context, snapshot) {
+            return (snapshot.hasData)
+                ? MainPage(
+                    database: snapshot.data![0] as Map<int, Pump>,
+                    currentlyActivePumpId: snapshot.data![1] as int,
+                    setPumpDripRateCallback: setPumpDripRate,
+                    setPumpVtbiCallback: setPumpVtbi,
+                    reloadPumpCallback: updatePumpOnlyRateAndVtbi,
+                    selectPumpCallback: selectPump,
+                    addPumpCallback: addPump)
+                : const StartupLoadingScreen();
+          },
+        );
+      },
+    )));
   }
 }
 
-// TODO: Package all of the FutureBuilders' logic into this class:
-class StartupLoadingPage extends StatelessWidget {
-  const StartupLoadingPage({super.key});
+class StartupLoadingScreen extends StatelessWidget {
+  const StartupLoadingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(body: Text('Mettu'));
+    return const Text('Loading...');
   }
 }

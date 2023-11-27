@@ -92,7 +92,7 @@ class CustomNumPad extends StatelessWidget {
 class CustomNumberInput extends StatefulWidget {
   const CustomNumberInput({super.key, required this.senderCallback});
 
-  final ValueSetter<int> senderCallback;
+  final ValueSetter<double> senderCallback;
 
   @override
   State<CustomNumberInput> createState() => _CustomNumberInputState();
@@ -130,15 +130,17 @@ class _CustomNumberInputState extends State<CustomNumberInput> {
     // print(analogOut);
 
     // Test inputs between 0 and 1023:
-    int analogOut = min(double.parse(_controller.text).round(), 1023);
-    widget.senderCallback(analogOut);
+    // int analogOut = min(double.parse(_controller.text).round(), 1023);
+    // print(analogOut);
+    widget.senderCallback(double.parse(_controller.text));
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [
-      SizedBox(
-          height: 50,
+    return Scaffold(
+        body: Column(children: [
+      Container(
+          height: 100,
           // child: GestureDetector(
           // onTap: () => setState(() => numPadIsActive = true),
           child: TextField(
@@ -152,6 +154,6 @@ class _CustomNumberInputState extends State<CustomNumberInput> {
               onSubmitKeyPress: onSubmitKeyPress,
               onDecimalKeyPress: onDecimalKeyPress)
           : const Text('Enter value')
-    ]);
+    ]));
   }
 }

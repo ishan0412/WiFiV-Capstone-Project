@@ -1,84 +1,83 @@
 import 'package:flutter/material.dart';
-import 'data_model.dart';
-import 'data_service.dart';
-import 'keyvalue_service.dart';
+import 'data/data_model.dart';
+import 'widgets/addpump.dart';
+
+class PumpNavBar extends StatefulWidget {
+  final List<Pump> pumpListOnStartup;
+  final int currentlyActivePumpIdOnStartup;
+  final void Function(int) selectPumpCallback;
+  final void Function(Pump) addPumpCallback;
+
+  PumpNavBar(
+      {super.key,
+      required this.pumpListOnStartup,
+      required this.currentlyActivePumpIdOnStartup,
+      required this.selectPumpCallback,
+      required this.addPumpCallback});
+
+  @override
+  PumpNavBarState createState() =>
+      PumpNavBarState(pumpListOnStartup, currentlyActivePumpIdOnStartup);
+}
+
+class PumpNavBarState extends State<PumpNavBar> {
+  List<Pump> pumpList;
+  int currentlyActivePumpId;
+
+  PumpNavBarState(this.pumpList, this.currentlyActivePumpId);
+
+  void addPump(Pump addedPump) {
+    setState(() {
+      pumpList.add(addedPump);
+      currentlyActivePumpId = addedPump.id;
+    });
+    widget.addPumpCallback(addedPump);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(children: [
+      Container(
+          height: 50,
+          width: 300,
+          child: ListView(scrollDirection: Axis.horizontal, children: [
+            for (Pump e in pumpList)
+              PumpSelectTab(
+                  thisPump: e,
+                  isActivePump: e.id == currentlyActivePumpId,
+                  onPumpSelectCallback: (id) {
+                    setState(() => currentlyActivePumpId = id);
+                    widget.selectPumpCallback(id);
+                  },
+                  onPumpRemoveCallback: (pump) {})
+          ])),
+      TextButton(
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => AddPumpWidget(addPumpCallback: addPump))),
+          child: const Text('+'))
+    ]);
+  }
+}
 
 class PumpSelectTab extends StatelessWidget {
-  final String patientName;
-  final int pumpId;
-  // final bool isCurrentlySelected;
+  final Pump thisPump;
+  final bool isActivePump;
   final ValueSetter<int> onPumpSelectCallback;
+  final ValueSetter<Pump> onPumpRemoveCallback;
 
   const PumpSelectTab(
       {super.key,
-      required this.patientName,
-      required this.pumpId,
-      required this.onPumpSelectCallback});
+      required this.thisPump,
+      required this.isActivePump,
+      required this.onPumpSelectCallback,
+      required this.onPumpRemoveCallback});
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-        height: 100,
+    return Container(
+        height: 20,
         child: TextButton(
-            onPressed: () => onPumpSelectCallback(pumpId),
-            child: Text(patientName)));
-  }
-}
-
-class PumpNavBar extends StatefulWidget {
-  final KeyValueService keyValueStore;
-  final DataService database;
-  final Pump currentlyActivePumpOnStartup;
-  final List<Pump> allPumpsListOnStartup;
-  final ValueSetter<Pump> onPumpSelectCallback;
-  // To pass to child widget:
-  // final double currentlyActivePumpRate;
-  // final double currentlyActivePumpVtbi;
-
-  const PumpNavBar(
-      {super.key,
-      required this.keyValueStore,
-      required this.database,
-      required this.currentlyActivePumpOnStartup,
-      required this.allPumpsListOnStartup,
-      required this.onPumpSelectCallback});
-
-  @override
-  State<StatefulWidget> createState() =>
-      _PumpNavBarState(currentlyActivePumpOnStartup, allPumpsListOnStartup);
-}
-
-class _PumpNavBarState extends State<PumpNavBar> {
-  Future<Pump>? currentlyActivePump;
-  Future<List<Pump>>? allPumpsList;
-
-  _PumpNavBarState(Pump activePumpOnStartup, List<Pump> allPumpsListOnStartup) {
-    currentlyActivePump = Future.value(activePumpOnStartup);
-    allPumpsList = Future.value(allPumpsListOnStartup);
-  }
-
-  // void selectActivePump(Pump activePump) {
-  //   widget.onPumpSelectCallback()
-  // }
-
-  @override
-  Widget build(BuildContext context) {
-    // return Scaffold(
-    //     body: ListView(
-    //   scrollDirection: Axis.horizontal,
-    //   children: [
-    //     for (Pump e in allPumpsList)
-    //       PumpSelectTab(
-    //         patientName: e.patientName,
-    //         pumpId: e.id,
-    //         onPumpSelectCallback: (value) => {
-    //           setState(
-    //             () => _setCurrentlyActivePumpId(value),
-    //           )
-    //         },
-    //       )
-    //   ],
-    // ));
-    return const Text('Donald Pump');
+            onPressed: () => onPumpSelectCallback(thisPump.id),
+            child: Text('${thisPump.patientName} $isActivePump')));
   }
 }
