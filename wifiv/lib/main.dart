@@ -47,7 +47,7 @@ class MyAppState extends State<MyApp> {
   //   (await database).updatePumpOnlyRateAndVtbi(updatedPump);
   // }
 
-  void updatePumpOnlyRateAndVtbi(Pump updatedPump) async {
+  void updatePump(Pump updatedPump) async {
     // ! NOTE: probably clears pump update log
     (await database).updatePump(updatedPump);
   }
@@ -85,7 +85,7 @@ class MyAppState extends State<MyApp> {
                     currentlyActivePumpId: snapshot.data![1] as int,
                     setPumpDripRateCallback: setPumpDripRate,
                     setPumpVtbiCallback: setPumpVtbi,
-                    reloadPumpCallback: updatePumpOnlyRateAndVtbi,
+                    reloadPumpCallback: updatePump,
                     selectPumpCallback: selectPump,
                     addPumpCallback: addPump)
                 : const StartupLoadingScreen();
@@ -95,6 +95,14 @@ class MyAppState extends State<MyApp> {
     )));
   }
 }
+
+// double suggestRate(double currentMap) {
+//   if (currentMap < 65) {
+    
+//   } else {
+//     return 0;
+//   }
+// }
 
 class StartupLoadingScreen extends StatelessWidget {
   const StartupLoadingScreen({super.key});
