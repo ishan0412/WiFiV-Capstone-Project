@@ -3,8 +3,8 @@ import 'dart:io';
 // import 'dart:js_util';
 import 'package:tcp_socket_connection/tcp_socket_connection.dart';
 import 'package:network_info_plus/network_info_plus.dart';
-// import 'package:lan_scanner/lan_scanner.dart';
-// import 'package:network_discovery/network_discovery.dart';
+import 'package:lan_scanner/lan_scanner.dart';
+import 'package:network_discovery/network_discovery.dart';
 import 'package:network_tools/network_tools.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
@@ -154,7 +154,7 @@ class PatientNamePopup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: Container(
-            height: 100, child: TextField(onSubmitted: onSubmitCallback)));
+        body: Column(children: [SizedBox(height: 200), Container(
+            height: 100, child: TextField(onSubmitted: onSubmitCallback))]));
   }
 }

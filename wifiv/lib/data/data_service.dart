@@ -3,6 +3,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'data_model.dart';
+import 'dart:io' show Platform;
 
 class DataService {
   final Database database;
@@ -10,22 +11,26 @@ class DataService {
   DataService._create(this.database);
 
   static Future<DataService> connectToDatabase() async {
-    WidgetsFlutterBinding.ensureInitialized();
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
+    if (!(Platform.isIOS)) {
+      WidgetsFlutterBinding.ensureInitialized();
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+    }
+    var databasePath = join(await getDatabasesPath(), 'pump_settings_database.db');
     Database database = await openDatabase(
-        join(await getDatabasesPath(), 'pump_settings_database.db'),
+        databasePath,
         onCreate: (db, version) {
       return db.execute(
           'CREATE TABLE pumps(id INTEGER PRIMARY KEY, ipAddress TEXT, drugName TEXT, patientName TEXT, currentRate REAL, currentVtbi REAL, pumpChangeLog TEXT)');
     }, onUpgrade: ((db, oldVersion, newVersion) {
+      print('Mettu');
       // db.execute('ALTER TABLE pumps ADD drugName TEXT');
       // db.execute('ALTER TABLE pumps ADD patientName TEXT');
       // db.execute('ALTER TABLE pumps ADD currentRate REAL');
       // db.execute('ALTER TABLE pumps ADD currentVtbi REAL');
-      // return db.execute('ALTER TABLE pumps ADD pumpChangeLog TEXT');
+      // db.execute('ALTER TABLE pumps ADD pumpChangeLog TEXT');
       // return db.execute('ALTER TABLE pumps ADD patientName TEXT');
-    }), version: 5);
+    }), version: 2);
     return DataService._create(database);
   }
 

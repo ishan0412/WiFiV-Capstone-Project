@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dart_ping_ios/dart_ping_ios.dart';
 import 'data/keyvalue_service.dart';
 import 'data/data_service.dart';
 import 'data/data_model.dart';
@@ -16,6 +17,7 @@ void main() async {
   //     drugName: 'Adrenaline',
   //     patientName: 'Pauleh');
   // database.insertPump(testPump);
+  DartPingIOS.register();
   runApp(const MyApp());
 }
 
@@ -47,7 +49,7 @@ class MyAppState extends State<MyApp> {
   //   (await database).updatePumpOnlyRateAndVtbi(updatedPump);
   // }
 
-  void updatePump(Pump updatedPump) async {
+  void updatePumpOnlyRateAndVtbi(Pump updatedPump) async {
     // ! NOTE: probably clears pump update log
     (await database).updatePump(updatedPump);
   }
@@ -85,7 +87,7 @@ class MyAppState extends State<MyApp> {
                     currentlyActivePumpId: snapshot.data![1] as int,
                     setPumpDripRateCallback: setPumpDripRate,
                     setPumpVtbiCallback: setPumpVtbi,
-                    reloadPumpCallback: updatePump,
+                    reloadPumpCallback: updatePumpOnlyRateAndVtbi,
                     selectPumpCallback: selectPump,
                     addPumpCallback: addPump)
                 : const StartupLoadingScreen();
@@ -95,14 +97,6 @@ class MyAppState extends State<MyApp> {
     )));
   }
 }
-
-// double suggestRate(double currentMap) {
-//   if (currentMap < 65) {
-    
-//   } else {
-//     return 0;
-//   }
-// }
 
 class StartupLoadingScreen extends StatelessWidget {
   const StartupLoadingScreen({super.key});

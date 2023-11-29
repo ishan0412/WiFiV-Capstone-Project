@@ -139,6 +139,7 @@ class _CustomNumberInputState extends State<CustomNumberInput> {
   Widget build(BuildContext context) {
     return Scaffold(
         body: Column(children: [
+      SizedBox(height: 200),
       Container(
           height: 100,
           // child: GestureDetector(
