@@ -38,13 +38,14 @@ dependencies:
   tcp_socket_connection: ^0.3.1
   sqflite: ^2.3.0
   shared_preferences: ^2.2.2
-  network_discovery: ^1.0.0
+  # network_discovery: ^1.0.0
   network_info_plus: ^4.1.0
-  lan_scanner: ^3.5.0
+  # lan_scanner: ^3.5.0
   network_tools: ^3.0.0+3
   web_socket_channel: ^2.4.0
   sqflite_common_ffi: any
   sqlite3_flutter_libs: any
+  path: any
 
 dev_dependencies:
   flutter_test:
