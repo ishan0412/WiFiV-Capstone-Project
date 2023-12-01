@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'data/data_model.dart';
 import 'widgets/addpump.dart';
+import 'constants/constants.dart';
 
 class PumpNavBar extends StatefulWidget {
   final List<Pump> pumpListOnStartup;
@@ -36,26 +37,31 @@ class PumpNavBarState extends State<PumpNavBar> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(children: [
-      Container(
-          height: 50,
-          width: 300,
-          child: ListView(scrollDirection: Axis.horizontal, children: [
-            for (Pump e in pumpList)
-              PumpSelectTab(
-                  thisPump: e,
-                  isActivePump: e.id == currentlyActivePumpId,
-                  onPumpSelectCallback: (id) {
-                    setState(() => currentlyActivePumpId = id);
-                    widget.selectPumpCallback(id);
-                  },
-                  onPumpRemoveCallback: (pump) {})
-          ])),
-      TextButton(
-          onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-              builder: (context) => AddPumpWidget(addPumpCallback: addPump))),
-          child: const Text('+'))
-    ]);
+    // TODO: MediaQuery.sizeOf() for size-responsive UI
+    List<Widget> base = [];
+    for (Pump e in pumpList) {
+      base.add(PumpSelectTab(
+          thisPump: e,
+          isActivePump: e.id == currentlyActivePumpId,
+          onPumpSelectCallback: (id) {
+            setState(() => currentlyActivePumpId = id);
+            widget.selectPumpCallback(id);
+          },
+          onPumpRemoveCallback: (pump) {}));
+      base.add(const SizedBox(width: minMarginBtwnAdjElems));
+    }
+    base.add(SizedBox(width: buttonHeightOnPhone, child: TextButton(
+        onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (context) => AddPumpWidget(addPumpCallback: addPump))),
+        style: const ButtonStyle(
+            backgroundColor: MaterialStatePropertyAll(themeGreen),
+            foregroundColor: MaterialStatePropertyAll(Colors.white),
+            textStyle: MaterialStatePropertyAll(TextStyle(fontWeight: FontWeight.bold, fontSize: buttonHeightOnPhone - 2 * minButtonPadding)),
+            shape: MaterialStatePropertyAll(CircleBorder()),
+            fixedSize: MaterialStatePropertyAll(
+                    Size(buttonHeightOnPhone, buttonHeightOnPhone))),
+        child: Center(child: Text('+')))));
+    return Row(children: base);
   }
 }
 
@@ -74,10 +80,23 @@ class PumpSelectTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-        height: 20,
+    return FittedBox(
         child: TextButton(
+            style: ButtonStyle(
+                backgroundColor: const MaterialStatePropertyAll(themeGray),
+                textStyle: const MaterialStatePropertyAll(buttonTextStyle),
+                foregroundColor: const MaterialStatePropertyAll(Colors.white),
+                // TODO: change this and actually set min, max, and fixed sizes correctly
+                minimumSize: const MaterialStatePropertyAll(
+                    Size(minButtonWidthOnPhone, buttonHeightOnPhone)),
+                fixedSize: const MaterialStatePropertyAll(
+                    Size(minButtonWidthOnPhone, buttonHeightOnPhone)),
+                maximumSize: const MaterialStatePropertyAll(
+                    Size(minButtonWidthOnPhone, buttonHeightOnPhone)),
+                shape: MaterialStatePropertyAll(RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(
+                        buttonHeightOnPhone * buttonCornerRadiusScale)))),
             onPressed: () => onPumpSelectCallback(thisPump.id),
-            child: Text('${thisPump.patientName} $isActivePump')));
+            child: Center(child: Text(thisPump.patientName))));
   }
 }

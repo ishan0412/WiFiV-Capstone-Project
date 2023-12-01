@@ -13,13 +13,16 @@ class DataService {
   static Future<DataService> connectToDatabase() async {
     if (!(Platform.isIOS)) {
       WidgetsFlutterBinding.ensureInitialized();
-      sqfliteFfiInit();
-      databaseFactory = databaseFactoryFfi;
+      if (!(Platform.isAndroid)) {
+        sqfliteFfiInit();
+        databaseFactory = databaseFactoryFfi;
+      }
     }
-    var databasePath = join(await getDatabasesPath(), 'pump_settings_database.db');
-    Database database = await openDatabase(
-        databasePath,
-        onCreate: (db, version) {
+    var databasePath =
+        join(await getDatabasesPath(), 'pump_settings_database.db');
+    print(databasePath);
+    Database database =
+        await openDatabase(databasePath, onCreate: (db, version) {
       return db.execute(
           'CREATE TABLE pumps(id INTEGER PRIMARY KEY, ipAddress TEXT, drugName TEXT, patientName TEXT, currentRate REAL, currentVtbi REAL, pumpChangeLog TEXT)');
     }, onUpgrade: ((db, oldVersion, newVersion) {
@@ -30,7 +33,10 @@ class DataService {
       // db.execute('ALTER TABLE pumps ADD currentVtbi REAL');
       // db.execute('ALTER TABLE pumps ADD pumpChangeLog TEXT');
       // return db.execute('ALTER TABLE pumps ADD patientName TEXT');
-    }), version: 2);
+    }), 
+    // version: 5
+    version: 1
+    );
     return DataService._create(database);
   }
 

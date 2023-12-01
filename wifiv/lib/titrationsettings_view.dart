@@ -5,7 +5,8 @@ import 'data/data_model.dart';
 import 'widgets/custom_number_input.dart';
 import 'pump_navbar.dart';
 import 'package:tcp_socket_connection/tcp_socket_connection.dart';
-import 'dart:math' show min;
+// import 'dart:math' show min;
+import 'constants/constants.dart';
 
 const int controllerPort = 80; // will always be 80?
 const int connectionTimeout =
@@ -13,6 +14,7 @@ const int connectionTimeout =
 
 class MainPage extends StatefulWidget {
   Map<int, Pump> database;
+  Map<int, List<double>> bloodPressureStorage = {};
   Map<int, TcpSocketConnection> socketsByPumpId = {};
   int currentlyActivePumpId;
   final void Function(int, double) setPumpDripRateCallback;
@@ -46,6 +48,9 @@ class MainPageState extends State<MainPage> {
   String currentlyActivePumpDrugName;
   double currentlyActivePumpRate;
   double currentlyActivePumpVtbi;
+  double currentSystolicPressure = 0;
+  double currentDiastolicPressure = 0;
+  double currentMeanArterialPressure = 0;
   bool pageIsInactive = false;
   // OverlayEntry? numpadInput;
 
@@ -160,10 +165,16 @@ class MainPageState extends State<MainPage> {
     switch (updateMessage[updateMessage.length - 1]) {
       case '}':
         // Reload/sync pump data between microcontroller and app
-        Pump updatedPump = Pump.fromMap(jsonDecode(updateMessage));
+        List<String> parsedMessageData = updateMessage.split('#');
+        Pump updatedPump = Pump.fromMap(jsonDecode(parsedMessageData[0]));
         print('Pump ${updatedPump.id} reload');
         updatedPump.patientName = widget.database[updatedPump.id]!.patientName;
         widget.database[updatedPump.id] = updatedPump;
+        widget.bloodPressureStorage[updatedPump.id] = parsedMessageData[1]
+            .substring(0, parsedMessageData[1].length - 1)
+            .split(' ')
+            .map((e) => double.parse(e))
+            .toList();
         if (updatedPump.id == widget.currentlyActivePumpId) {
           setState(() {
             currentlyActivePumpDrugName =
@@ -172,6 +183,12 @@ class MainPageState extends State<MainPage> {
                 widget.database[updatedPump.id]!.currentRate;
             currentlyActivePumpVtbi =
                 widget.database[updatedPump.id]!.currentVtbi;
+            currentSystolicPressure =
+                widget.bloodPressureStorage[updatedPump.id]![0];
+            currentDiastolicPressure =
+                widget.bloodPressureStorage[updatedPump.id]![1];
+            currentMeanArterialPressure =
+                widget.bloodPressureStorage[updatedPump.id]![2];
           });
         }
         widget.reloadPumpCallback(updatedPump);
@@ -212,6 +229,15 @@ class MainPageState extends State<MainPage> {
         widget.setPumpVtbiCallback(targetPumpId, updatedValue);
       }
     }
+    widget.bloodPressureStorage[targetPumpId] = parsedUpdateInfo.sublist(2, 5).map((e) => double.parse(e)).toList();
+    setState(() {
+      currentSystolicPressure =
+                widget.bloodPressureStorage[targetPumpId]![0];
+            currentDiastolicPressure =
+                widget.bloodPressureStorage[targetPumpId]![1];
+            currentMeanArterialPressure =
+                widget.bloodPressureStorage[targetPumpId]![2];
+    });
   }
 
   // void onNumpadOpen(TitrationSettingField openedNumpadInput) {
@@ -237,13 +263,13 @@ class MainPageState extends State<MainPage> {
         onValueSubmitCallback: setPumpVtbi,
         value: currentlyActivePumpVtbi);
     List<Widget> allChildWidgets = [
-      const SizedBox(height: 40),
+      // const SizedBox(height: 40),
       PumpNavBar(
           pumpListOnStartup: widget.database.values.toList(),
           currentlyActivePumpIdOnStartup: widget.currentlyActivePumpId,
           selectPumpCallback: selectPump,
           addPumpCallback: addPump),
-      const SizedBox(height: 200),
+      const SizedBox(height: minMarginBelowNavBar),
     ];
 
     if (currentlyActivePumpDrugName.isEmpty) {
@@ -252,13 +278,19 @@ class MainPageState extends State<MainPage> {
       allChildWidgets.addAll([
         Text(currentlyActivePumpDrugName.toUpperCase()),
         setDripRateField,
-        setVtbiField
+        setVtbiField,
+        Text('$currentSystolicPressure'),
+        Text('$currentDiastolicPressure'),
+        Text('$currentMeanArterialPressure')
       ]);
     }
 
-    Widget base = Column(
-      children: allChildWidgets,
-    );
+    Widget base = Container(
+        margin: const EdgeInsets.fromLTRB(
+            screenLeftRightMargin, screenTopMargin, screenLeftRightMargin, 0),
+        child: Column(
+          children: allChildWidgets,
+        ));
     // if (numpadIsOpen) {
     //   onNumpadOpen(setDripRateField);
     // }

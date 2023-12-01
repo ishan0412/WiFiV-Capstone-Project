@@ -23,12 +23,16 @@ int clientCount = 0;
 // int thisPumpId = -1; // lower 8 bits of IP address; if the pump didn't connect to wifi, this'll stay -1
 
 // CHANGE THESE FOR EACH PUMP:
-int thisPumpId = 2;  // unique to each pump
+int thisPumpId = 4;  // unique to each pump
 String drugName = "VASOPRESSIN";
 ////////////////////////////
 
+// Pump local variables:
 double currentRate = 0;
 double currentVtbi = 0;
+double systolicPressure = 70;
+double diastolicPressure = 40;
+double meanArterialPressure = 50;
 
 void setup() {
   Serial.begin(115200);
@@ -98,6 +102,12 @@ void loop() {
           if (targetSetting == 'r') {
             Serial.print(" RATE: ");
             currentRate = valueToWrite;
+            double pressureIncrease = 0.133 * currentRate;
+            systolicPressure += pressureIncrease;
+            diastolicPressure += pressureIncrease;
+            meanArterialPressure += pressureIncrease;
+            Serial.print("MAP: ");
+            Serial.println(meanArterialPressure);
             // valueToWrite: value of the analog pin used to control the pump
             // MOTOR CONTROL CODE HERE:
             setMotorAnalogValue(valueToWrite);
@@ -144,11 +154,14 @@ void setMotorAnalogValue(int analogPinValue) {
 void broadcastDataUpdateBy(WiFiClient updatingClient, char targetSetting) {
   for (int index = 0; index < clientCount; index++) {
     WiFiClient currClient = clientList[index];
-     if (currClient.remoteIP() != updatingClient.remoteIP()) {
+     // if (currClient.remoteIP() != updatingClient.remoteIP()) {
       currClient.write((String(thisPumpId) + " " 
       + String((targetSetting == 'r') ? currentRate : currentVtbi) 
-      + targetSetting).c_str());
-     }
+      + " " + String(systolicPressure) + 
+      + " " + String(diastolicPressure) +
+      + " " + String(meanArterialPressure)
+      + " " + targetSetting).c_str());
+     // }
     // Serial.println("Broadcasted data update.");
   }
 }
@@ -159,6 +172,8 @@ void sendDataAsJson(WiFiClient client) {
   + "\", \"drugName\": \"" + drugName 
   + "\", \"patientName\": \"" + "" 
   + "\", \"currentRate\": " + String(currentRate) 
-  + ", \"currentVtbi\": " + String(currentVtbi) + "}";
+  + ", \"currentVtbi\": " + String(currentVtbi) + "}" + "#" + String(systolicPressure) 
+      + " " + String(diastolicPressure) 
+      + " " + String(meanArterialPressure) + "}";
   client.write(dataToSend.c_str());
 }

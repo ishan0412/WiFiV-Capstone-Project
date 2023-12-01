@@ -12,9 +12,9 @@ void main() async {
   // DataService database = await DataService.connectToDatabase();
   // database.clearDatabase();
   // Pump testPump = Pump(
-  //     id: 0,
-  //     ipAddress: '192.168.224.196',
-  //     drugName: 'Adrenaline',
+  //     id: 1,
+  //     ipAddress: '192.168.224.40',
+  //     drugName: 'Epinephrine',
   //     patientName: 'Pauleh');
   // database.insertPump(testPump);
   DartPingIOS.register();
