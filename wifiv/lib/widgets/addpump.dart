@@ -90,7 +90,8 @@ class AddPumpWidgetState extends State<AddPumpWidget> {
 
   void parseReceivedPumpInfo(
       String pumpInfo, TcpSocketConnection socketToPump) {
-    Map<String, dynamic> addedPumpAsJson = jsonDecode(pumpInfo);
+    List<String> parsedMessageData = pumpInfo.split('#');
+    Map<String, dynamic> addedPumpAsJson = jsonDecode(parsedMessageData[0]);
     Navigator.of(context).push(MaterialPageRoute(
         builder: (context) =>
             PatientNamePopup(onSubmitCallback: (String inputPatientName) {
