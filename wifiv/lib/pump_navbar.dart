@@ -50,17 +50,21 @@ class PumpNavBarState extends State<PumpNavBar> {
           onPumpRemoveCallback: (pump) {}));
       base.add(const SizedBox(width: minMarginBtwnAdjElems));
     }
-    base.add(SizedBox(width: buttonHeightOnPhone, child: TextButton(
-        onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) => AddPumpWidget(addPumpCallback: addPump))),
-        style: const ButtonStyle(
-            backgroundColor: MaterialStatePropertyAll(themeGreen),
-            foregroundColor: MaterialStatePropertyAll(Colors.white),
-            textStyle: MaterialStatePropertyAll(TextStyle(fontWeight: FontWeight.bold, fontSize: buttonHeightOnPhone - 2 * minButtonPadding)),
-            shape: MaterialStatePropertyAll(CircleBorder()),
-            fixedSize: MaterialStatePropertyAll(
+    base.add(SizedBox(
+        width: buttonHeightOnPhone,
+        child: TextButton(
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (context) => AddPumpWidget(addPumpCallback: addPump))),
+            style: const ButtonStyle(
+                backgroundColor: MaterialStatePropertyAll(themeGreen),
+                foregroundColor: MaterialStatePropertyAll(Colors.white),
+                textStyle: MaterialStatePropertyAll(TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: buttonHeightOnPhone - 2 * minButtonPadding)),
+                shape: MaterialStatePropertyAll(CircleBorder()),
+                fixedSize: MaterialStatePropertyAll(
                     Size(buttonHeightOnPhone, buttonHeightOnPhone))),
-        child: Center(child: Text('+')))));
+            child: const Center(child: Icon(Icons.add)))));
     return Row(children: base);
   }
 }
@@ -83,8 +87,9 @@ class PumpSelectTab extends StatelessWidget {
     return FittedBox(
         child: TextButton(
             style: ButtonStyle(
-                backgroundColor: const MaterialStatePropertyAll(themeGray),
-                textStyle: const MaterialStatePropertyAll(buttonTextStyle),
+                backgroundColor: MaterialStatePropertyAll(
+                    isActivePump ? Colors.transparent : themeGray),
+                textStyle: const MaterialStatePropertyAll(bodyTextStyle),
                 foregroundColor: const MaterialStatePropertyAll(Colors.white),
                 // TODO: change this and actually set min, max, and fixed sizes correctly
                 minimumSize: const MaterialStatePropertyAll(
@@ -94,6 +99,10 @@ class PumpSelectTab extends StatelessWidget {
                 maximumSize: const MaterialStatePropertyAll(
                     Size(minButtonWidthOnPhone, buttonHeightOnPhone)),
                 shape: MaterialStatePropertyAll(RoundedRectangleBorder(
+                    side: isActivePump
+                        ? const BorderSide(
+                            color: Colors.white, width: selectedTabBorderWidth)
+                        : BorderSide.none,
                     borderRadius: BorderRadius.circular(
                         buttonHeightOnPhone * buttonCornerRadiusScale)))),
             onPressed: () => onPumpSelectCallback(thisPump.id),

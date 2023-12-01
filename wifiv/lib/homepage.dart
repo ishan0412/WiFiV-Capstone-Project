@@ -302,12 +302,44 @@ class MainPageState extends State<MainPage> {
       allChildWidgets.add(const NoPumpsAddedMainPage());
     } else {
       allChildWidgets.addAll([
-        Text(currentlyActivePumpDrugName.toUpperCase()),
+        Row(children: [
+          Text(currentlyActivePumpDrugName.toUpperCase(),
+              style: headingTextStyle),
+          const Expanded(child: SizedBox()),
+          CtaButton(onPressed: () {}, buttonText: 'Log'),
+          const SizedBox(width: minMarginBtwnAdjElems),
+          CtaButton(onPressed: () => suggestRateChange(), buttonText: 'Suggest')
+        ]),
+        const SizedBox(height: minMarginBtwnAdjElems),
         setDripRateField,
+        const SizedBox(height: minMarginBtwnAdjElems),
         setVtbiField,
-        Text('${currentSystolicPressure.round()}'),
-        Text('${currentDiastolicPressure.round()}'),
-        Text('${currentMeanArterialPressure.round()}')
+        // Text('${currentSystolicPressure.round()}'),
+        // Text('${currentDiastolicPressure.round()}'),
+        // Text('${currentMeanArterialPressure.round()}'),
+        const SizedBox(height: minMarginBelowFields),
+        Row(children: [
+          const Text('BLOOD PRESSURE', style: headingTextStyle),
+          const Expanded(child: SizedBox()),
+          CtaButton(onPressed: () {}, buttonText: 'Log'),
+        ]),
+        const SizedBox(height: minMarginBtwnAdjElems),
+        Row(
+          children: [
+            BloodPressureInfoWidget(
+                child: Text('${currentMeanArterialPressure.round()}',
+                    style: headingTextStyle)),
+            const SizedBox(width: minMarginBtwnAdjElems),
+            BloodPressureInfoWidget(
+                child: Column(children: [
+              Text('${currentSystolicPressure.round()}',
+                  style: headingTextStyle),
+              const SizedBox(height: minMarginBtwnAdjElems),
+              Text('${currentDiastolicPressure.round()}',
+                  style: headingTextStyle)
+            ])),
+          ],
+        )
       ]);
     }
 
@@ -378,6 +410,19 @@ class MainPageState extends State<MainPage> {
 //                 child: Text('${widget.settingName}: ${widget.value}')));
 //   }
 // }
+class CtaButton extends StatelessWidget {
+  final void Function() onPressed;
+  final String buttonText;
+
+  const CtaButton(
+      {super.key, required this.onPressed, required this.buttonText});
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+        style: ctaButtonStyle, onPressed: onPressed, child: Text(buttonText));
+  }
+}
 
 class TitrationSettingField extends StatelessWidget {
   final String settingName;
@@ -405,15 +450,60 @@ class TitrationSettingField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-        height: 100,
+        height: numberInputMinSizeOnPhone,
         child: GestureDetector(
             onTap: () => openNumpadInput(context),
-            child:
-                Container(height: 100, child: Text('$settingName: $value'))));
+            child: Container(
+                padding: const EdgeInsets.all(minOverlayHorizontalPadding),
+                height:
+                    numberInputMinSizeOnPhone, // Text('$settingName: $value')
+                decoration: const BoxDecoration(
+                    color: themeOverlay,
+                    borderRadius: BorderRadius.all(
+                        Radius.circular(fieldCornerRadiusOnPhone))),
+                child: Center(
+                    child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.ideographic,
+                        children: [
+                      Text(settingName, style: bodyTextStyle),
+                      const Expanded(child: SizedBox()),
+                      Text('$value', style: displayTextStyle),
+                      const SizedBox(width: minMarginBtwnAdjElems),
+                      Text((settingName == 'RATE') ? 'mL/hr' : 'mL',
+                          style: bodyTextStyle)
+                    ])))));
     // return Container(
     //     height: 100,
     //     child: GestureDetector(
     //         onTap: onNumpadOpen, child: Text('$settingName: $value')));
+  }
+}
+
+class BloodPressureInfoWidget extends StatefulWidget {
+  final Widget child;
+
+  const BloodPressureInfoWidget({super.key, required this.child});
+
+  @override
+  BloodPressureInfoWidgetState createState() => BloodPressureInfoWidgetState();
+}
+
+class BloodPressureInfoWidgetState extends State<BloodPressureInfoWidget> {
+  bool isExpanded = false;
+
+  BloodPressureInfoWidgetState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(child: Container(
+        height: numberInputMinSizeOnPhone,
+        padding: const EdgeInsets.all(minOverlayHorizontalPadding),
+        decoration: const BoxDecoration(
+            color: themeOverlay,
+            borderRadius:
+                BorderRadius.all(Radius.circular(fieldCornerRadiusOnPhone))),
+        child: widget.child));
   }
 }
 

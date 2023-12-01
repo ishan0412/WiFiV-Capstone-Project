@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:dart_ping_ios/dart_ping_ios.dart';
+import 'constants/constants.dart';
 import 'data/keyvalue_service.dart';
 import 'data/data_service.dart';
 import 'data/data_model.dart';
-import 'titrationsettings_view.dart';
+import 'homepage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // KeyValueService keyValueStore = await KeyValueService.openKeyValueStore();
-  // keyValueStore.setCurrentlyActivePumpId(0);
-  //  DataService database = await DataService.connectToDatabase();
+  // keyValueStore.setCurrentlyActivePumpId(1);
+  // DataService database = await DataService.connectToDatabase();
   // database.clearDatabase();
   // Pump testPump = Pump(
   //     id: 1,
   //     ipAddress: '192.168.224.40',
   //     drugName: 'Epinephrine',
   //     patientName: 'Pauleh');
-  // database.insertPump(testPump);
+  // database.insertPump(testPump.changeRate(555.55));
   DartPingIOS.register();
   runApp(const MyApp());
 }
@@ -81,7 +82,8 @@ class MyAppState extends State<MyApp> {
             keyValueStore.getCurrentlyActivePumpId()
           ]),
           builder: (context, snapshot) {
-            return (snapshot.hasData)
+            return DecoratedBox(decoration: const BoxDecoration(color: themeBlue), 
+            child: ((snapshot.hasData)
                 ? MainPage(
                     database: snapshot.data![0] as Map<int, Pump>,
                     currentlyActivePumpId: snapshot.data![1] as int,
@@ -90,7 +92,7 @@ class MyAppState extends State<MyApp> {
                     reloadPumpCallback: updatePumpOnlyRateAndVtbi,
                     selectPumpCallback: selectPump,
                     addPumpCallback: addPump)
-                : const StartupLoadingScreen();
+                : const StartupLoadingScreen()));
           },
         );
       },
