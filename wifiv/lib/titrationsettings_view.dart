@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'data/data_model.dart';
@@ -59,6 +60,8 @@ class MainPageState extends State<MainPage> {
 
   @override
   void initState() {
+    Timer.periodic(
+        const Duration(seconds: 10), (Timer t) => suggestRateChange());
     initSocketConnections();
     super.initState();
   }
@@ -133,6 +136,18 @@ class MainPageState extends State<MainPage> {
       currentlyActivePumpDrugName = widget.database[selectedPumpId]!.drugName;
       currentlyActivePumpRate = widget.database[selectedPumpId]!.currentRate;
       currentlyActivePumpVtbi = widget.database[selectedPumpId]!.currentVtbi;
+      if (widget.bloodPressureStorage[selectedPumpId] == null) {
+        currentSystolicPressure = 0;
+        currentDiastolicPressure = 0;
+        currentMeanArterialPressure = 0;
+      } else {
+        currentSystolicPressure =
+            widget.bloodPressureStorage[selectedPumpId]![0];
+        currentDiastolicPressure =
+            widget.bloodPressureStorage[selectedPumpId]![1];
+        currentMeanArterialPressure =
+            widget.bloodPressureStorage[selectedPumpId]![2];
+      }
     });
     widget.currentlyActivePumpId = selectedPumpId;
     widget.selectPumpCallback(selectedPumpId);
@@ -209,12 +224,22 @@ class MainPageState extends State<MainPage> {
     List<String> parsedUpdateInfo = updateMessage.split(' ');
     int targetPumpId = int.parse(parsedUpdateInfo[0]);
     if (widget.database.containsKey(targetPumpId)) {
+      widget.bloodPressureStorage[targetPumpId] =
+          parsedUpdateInfo.sublist(2, 5).map((e) => double.parse(e)).toList();
       double updatedValue = double.parse(
           parsedUpdateInfo[1].substring(0, parsedUpdateInfo[1].length - 1));
       if (targetSetting == 'r') {
         print('Pump $targetPumpId rate update to $updatedValue');
         if (targetPumpId == widget.currentlyActivePumpId) {
           setState(() => currentlyActivePumpRate = updatedValue);
+          setState(() {
+            currentSystolicPressure =
+                widget.bloodPressureStorage[targetPumpId]![0];
+            currentDiastolicPressure =
+                widget.bloodPressureStorage[targetPumpId]![1];
+            currentMeanArterialPressure =
+                widget.bloodPressureStorage[targetPumpId]![2];
+          });
         }
         widget.database[targetPumpId] =
             widget.database[targetPumpId]!.changeRate(updatedValue);
@@ -229,15 +254,16 @@ class MainPageState extends State<MainPage> {
         widget.setPumpVtbiCallback(targetPumpId, updatedValue);
       }
     }
-    widget.bloodPressureStorage[targetPumpId] = parsedUpdateInfo.sublist(2, 5).map((e) => double.parse(e)).toList();
-    setState(() {
-      currentSystolicPressure =
-                widget.bloodPressureStorage[targetPumpId]![0];
-            currentDiastolicPressure =
-                widget.bloodPressureStorage[targetPumpId]![1];
-            currentMeanArterialPressure =
-                widget.bloodPressureStorage[targetPumpId]![2];
-    });
+  }
+
+  void suggestRateChange() {
+    if (currentMeanArterialPressure > 0) {
+      if (currentMeanArterialPressure < 65) {
+        print(currentlyActivePumpRate + 2);
+      } else {
+        print(0);
+      }
+    }
   }
 
   // void onNumpadOpen(TitrationSettingField openedNumpadInput) {
@@ -279,9 +305,9 @@ class MainPageState extends State<MainPage> {
         Text(currentlyActivePumpDrugName.toUpperCase()),
         setDripRateField,
         setVtbiField,
-        Text('$currentSystolicPressure'),
-        Text('$currentDiastolicPressure'),
-        Text('$currentMeanArterialPressure')
+        Text('${currentSystolicPressure.round()}'),
+        Text('${currentDiastolicPressure.round()}'),
+        Text('${currentMeanArterialPressure.round()}')
       ]);
     }
 
