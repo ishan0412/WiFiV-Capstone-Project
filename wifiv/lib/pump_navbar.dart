@@ -52,19 +52,20 @@ class PumpNavBarState extends State<PumpNavBar> {
     }
     base.add(SizedBox(
         width: buttonHeightOnPhone,
-        child: TextButton(
+        child: IconButton(
             onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                 builder: (context) => AddPumpWidget(addPumpCallback: addPump))),
+            alignment: Alignment.center, 
             style: const ButtonStyle(
                 backgroundColor: MaterialStatePropertyAll(themeGreen),
                 foregroundColor: MaterialStatePropertyAll(Colors.white),
-                textStyle: MaterialStatePropertyAll(TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: buttonHeightOnPhone - 2 * minButtonPadding)),
+                // textStyle: MaterialStatePropertyAll(TextStyle(
+                //     fontWeight: FontWeight.bold,
+                //     fontSize: buttonHeightOnPhone - 2 * minButtonPadding)),
                 shape: MaterialStatePropertyAll(CircleBorder()),
                 fixedSize: MaterialStatePropertyAll(
                     Size(buttonHeightOnPhone, buttonHeightOnPhone))),
-            child: const Center(child: Icon(Icons.add)))));
+            icon: Icon(Icons.add, size: 22))));
     return Row(children: base);
   }
 }
