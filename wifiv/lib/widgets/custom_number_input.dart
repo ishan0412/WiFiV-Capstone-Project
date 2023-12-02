@@ -1,7 +1,9 @@
 // import 'dart:io';
 // import 'dart:ui';
 import 'dart:math' show min;
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../constants/constants.dart';
 
 const double buttonSize =
     72; // ! eventually put button stylings in their own class and/or file
@@ -20,12 +22,12 @@ class NumericButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-        width: buttonSize,
-        height: buttonSize,
-        margin: const EdgeInsets.all(spacingBetweenButtons),
+        width: numPadButtonSize,
+        height: numPadButtonSize,
+        margin: const EdgeInsets.all(minMarginBtwnAdjElems),
         child: TextButton(
             onPressed: () => onNumericKeyPress(number),
-            child: Text('$number')));
+            child: Text('$number', style: bodyTextStyle)));
   }
 }
 
@@ -58,16 +60,16 @@ class CustomNumPad extends StatelessWidget {
     ];
     buttonsInPad.add(TableRow(children: [
       Container(
-          width: buttonSize,
-          height: buttonSize,
+          width: numPadButtonSize,
+          height: numPadButtonSize,
           child:
-              TextButton(onPressed: onBackKeyPress, child: const Text('Back'))),
+              TextButton(onPressed: onBackKeyPress, child: const Text('Back', style: bodyTextStyle))),
       NumericButton(number: 0, onNumericKeyPress: onNumericKeyPress),
       Container(
-          width: buttonSize,
-          height: buttonSize,
+          width: numPadButtonSize,
+          height: numPadButtonSize,
           child:
-              TextButton(onPressed: onDecimalKeyPress, child: const Text('.')))
+              TextButton(onPressed: onDecimalKeyPress, child: const Text('.', style: bodyTextStyle)))
     ]));
 
     return Column(children: [
@@ -79,8 +81,21 @@ class CustomNumPad extends StatelessWidget {
       // const SizedBox(height: spacingBetweenButtons),
       Container(
           width: 3 * buttonSize + 2 * spacingBetweenButtons,
-          height: buttonSize,
-          child: TextButton(
+          height: buttonHeightOnPhone,
+          child: TextButton(style: ButtonStyle(
+    // TODO: Make sizes adaptive!
+    // minimumSize: const MaterialStatePropertyAll(
+    //     Size(minButtonWidthOnPhone, buttonHeightOnPhone)),
+    // fixedSize: const MaterialStatePropertyAll(
+    //     Size(minButtonWidthOnPhone, buttonHeightOnPhone)),
+    // maximumSize: const MaterialStatePropertyAll(
+    //     Size(minButtonWidthOnPhone, buttonHeightOnPhone)),
+    backgroundColor: const MaterialStatePropertyAll(themeGreen),
+    foregroundColor: const MaterialStatePropertyAll(Colors.white),
+    textStyle: const MaterialStatePropertyAll(bodyTextStyle),
+    shape: MaterialStatePropertyAll(RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(buttonCornerRadiusOnPhone))),
+    padding: const MaterialStatePropertyAll(EdgeInsets.all(minButtonPadding))),
               onPressed: onSubmitKeyPress, child: const Text('Submit')))
     ]);
   }
@@ -90,9 +105,12 @@ class CustomNumPad extends StatelessWidget {
 // the docs here describe: https://api.flutter.dev/flutter/widgets/StatefulWidget-class.html
 ///
 class CustomNumberInput extends StatefulWidget {
-  const CustomNumberInput({super.key, required this.senderCallback});
+  const CustomNumberInput(
+      {super.key, required this.senderCallback, required this.propsPassed, required this.closeNumInputCallback});
 
   final ValueSetter<double> senderCallback;
+  final Map<String, dynamic> propsPassed;
+  final void Function() closeNumInputCallback;
 
   @override
   State<CustomNumberInput> createState() => _CustomNumberInputState();
@@ -103,7 +121,9 @@ class _CustomNumberInputState extends State<CustomNumberInput> {
   bool numPadIsActive = false;
 
   void onNumericKeyPress(int number) {
-    _controller.text += number.toString();
+    if (_controller.text.length < 6) {
+      _controller.text += number.toString();
+    }
   }
 
   void onBackKeyPress() {
@@ -114,7 +134,7 @@ class _CustomNumberInputState extends State<CustomNumberInput> {
   }
 
   void onDecimalKeyPress() {
-    if (!_controller.text.contains('.')) {
+    if ((!_controller.text.contains('.')) && (_controller.text.length < 6)) {
       _controller.text += '.';
     }
   }
@@ -137,24 +157,64 @@ class _CustomNumberInputState extends State<CustomNumberInput> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        body: Column(children: [
-      SizedBox(height: 200),
-      Container(
-          height: 100,
-          // child: GestureDetector(
-          // onTap: () => setState(() => numPadIsActive = true),
-          child: TextField(
-              controller: _controller,
-              readOnly: true,
-              onTap: () => setState(() => numPadIsActive = true))),
-      numPadIsActive
-          ? CustomNumPad(
-              onNumericKeyPress: onNumericKeyPress,
-              onBackKeyPress: onBackKeyPress,
-              onSubmitKeyPress: onSubmitKeyPress,
-              onDecimalKeyPress: onDecimalKeyPress)
-          : const Text('Enter value')
-    ]));
+    return Material(
+        color: Color.fromARGB(224, 39, 44, 59),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+          child: Container(
+            // color: Color.fromARGB(224, 39, 44, 59),
+            margin: const EdgeInsets.fromLTRB(screenLeftRightMargin,
+                screenTopMargin, screenLeftRightMargin, 0),
+            child: Column(children: [
+              // SizedBox(height: 200),
+              // Text(
+              //     'Enter a ${(widget.propsPassed['settingName']! == 'RATE') ? 'rate' : 'VTBI'} to update ${widget.propsPassed['patientName']}\'s pump with.', style: bodyTextStyle),
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                Text(
+                    'Enter a new ${(widget.propsPassed['settingName']! == 'RATE') ? 'rate' : 'VTBI'} value.',
+                    style: bodyTextStyle),
+                const SizedBox(height: minMarginBtwnAdjElems),
+                TextButton(
+                    style: grayButtonStyle,
+                    onPressed: widget.closeNumInputCallback,
+                    child: const Text('Close'))
+              ]),
+              const SizedBox(height: minMarginBtwnAdjElems),
+              Container(
+                  // height: 100,
+                  decoration: const BoxDecoration(
+                      color: themeOverlay,
+                      borderRadius: BorderRadius.all(
+                          Radius.circular(fieldCornerRadiusOnPhone))),
+                  height: numberInputMinSizeOnPhone,
+                  padding: const EdgeInsets.all(minOverlayHorizontalPadding),
+                  // child: GestureDetector(
+                  // onTap: () => setState(() => numPadIsActive = true),
+                  child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        SizedBox(
+                            width: 200,
+                            child: TextField(
+                                controller: _controller,
+                                readOnly: true,
+                                decoration: null,
+                                style: displayTextStyle,
+                                onTap: () =>
+                                    setState(() => numPadIsActive = true))),
+                        Text(
+                            (widget.propsPassed['settingName']! == 'RATE')
+                                ? 'mL/hr'
+                                : 'mL',
+                            style: bodyTextStyle)
+                      ])),
+              CustomNumPad(
+                  onNumericKeyPress: onNumericKeyPress,
+                  onBackKeyPress: onBackKeyPress,
+                  onSubmitKeyPress: onSubmitKeyPress,
+                  onDecimalKeyPress: onDecimalKeyPress)
+            ]))));
   }
 }

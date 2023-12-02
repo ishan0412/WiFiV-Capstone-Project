@@ -53,7 +53,7 @@ class MainPageState extends State<MainPage> {
   double currentDiastolicPressure = 0;
   double currentMeanArterialPressure = 0;
   bool pageIsInactive = false;
-  // OverlayEntry? numpadInput;
+  OverlayEntry? overlayEntry;
 
   MainPageState(this.currentlyActivePumpDrugName, this.currentlyActivePumpRate,
       this.currentlyActivePumpVtbi);
@@ -219,6 +219,22 @@ class MainPageState extends State<MainPage> {
     }
   }
 
+  void openNumPadInputWidget(void Function(double) senderCallbackOfNumInput,
+      Map<String, dynamic> propsToPass, BuildContext context) {
+    OverlayState? overlayState = Overlay.of(context);
+    overlayEntry = OverlayEntry(
+        builder: (context) => Positioned(
+            child: CustomNumberInput(
+                senderCallback: senderCallbackOfNumInput,
+                propsPassed: propsToPass,
+                closeNumInputCallback: closeCurrOverlay)));
+    overlayState.insert(overlayEntry!);
+  }
+
+  void closeCurrOverlay() {
+    overlayEntry!.remove();
+  }
+
   void recvPumpValueUpdateBroadcast(
       String updateMessage, String targetSetting) {
     List<String> parsedUpdateInfo = updateMessage.split(' ');
@@ -278,14 +294,40 @@ class MainPageState extends State<MainPage> {
   Widget build(BuildContext context) {
     TitrationSettingField setDripRateField = TitrationSettingField(
         settingName: 'RATE',
-        onNumpadOpen: () => pageIsInactive = true,
-        onNumpadClose: () => pageIsInactive = false,
+        onNumpadOpen: (senderCallback) {
+          pageIsInactive = true;
+          openNumPadInputWidget(
+              senderCallback,
+              {
+                'settingName': 'RATE',
+                'patientName':
+                    widget.database[widget.currentlyActivePumpId]!.patientName
+              },
+              context);
+        },
+        onNumpadClose: () {
+          pageIsInactive = false;
+          closeCurrOverlay();
+        },
         onValueSubmitCallback: setPumpDripRate,
         value: currentlyActivePumpRate);
     TitrationSettingField setVtbiField = TitrationSettingField(
         settingName: 'VTBI',
-        onNumpadOpen: () => pageIsInactive = true,
-        onNumpadClose: () => pageIsInactive = false,
+        onNumpadOpen: (senderCallback) {
+          pageIsInactive = true;
+          openNumPadInputWidget(
+              senderCallback,
+              {
+                'settingName': 'VTBI',
+                'patientName':
+                    widget.database[widget.currentlyActivePumpId]!.patientName
+              },
+              context);
+        },
+        onNumpadClose: () {
+          pageIsInactive = false;
+          closeCurrOverlay();
+        },
         onValueSubmitCallback: setPumpVtbi,
         value: currentlyActivePumpVtbi);
     List<Widget> allChildWidgets = [
@@ -346,12 +388,12 @@ class MainPageState extends State<MainPage> {
                     style: headingTextStyle)
               ]),
               const SizedBox(height: minMarginBtwnAdjElems),
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,children: [
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                 const Text('DIA', style: bodyTextStyle),
                 Text('${currentDiastolicPressure.round()}',
                     style: headingTextStyle)
               ]),
-              Expanded(child: Image.asset('assets/output-onlinegiftools.gif'))
+              // Expanded(child: Image.asset('assets/output-onlinegiftools (5).gif'))
             ])),
           ],
         )
@@ -442,7 +484,7 @@ class CtaButton extends StatelessWidget {
 class TitrationSettingField extends StatelessWidget {
   final String settingName;
   final double value;
-  final Function() onNumpadOpen;
+  final Function(void Function(double)) onNumpadOpen;
   final Function() onNumpadClose;
   final void Function(double) onValueSubmitCallback;
 
@@ -454,20 +496,24 @@ class TitrationSettingField extends StatelessWidget {
       required this.onNumpadClose,
       required this.onValueSubmitCallback});
 
-  void openNumpadInput(BuildContext context) {
-    Navigator.of(context).push(MaterialPageRoute(
-        builder: (context) => CustomNumberInput(senderCallback: (double value) {
-              onValueSubmitCallback(value);
-              Navigator.pop(context);
-            })));
-  }
+  // void openNumpadInput(BuildContext context) {
+  //   Navigator.of(context).push(MaterialPageRoute(
+  //       builder: (context) => CustomNumberInput(senderCallback: (double value) {
+  //             onValueSubmitCallback(value);
+  //             Navigator.pop(context);
+  //           })));
+  // }
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
         height: numberInputMinSizeOnPhone,
         child: GestureDetector(
-            onTap: () => openNumpadInput(context),
+            onTap: () => onNumpadOpen((double value) {
+                  onValueSubmitCallback(value);
+                  onNumpadClose();
+                  // Navigator.pop(context);
+                }),
             child: Container(
                 padding: const EdgeInsets.all(minOverlayHorizontalPadding),
                 height:
@@ -528,6 +574,12 @@ class NoPumpsAddedMainPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Text('Click the + button to add a pump to monitor!');
+    return const Center(
+        child: FittedBox(
+            child: Row(children: [
+      Text('Click the ', style: bodyTextStyle),
+      Icon(Icons.add, color: Colors.white, size: 18),
+      Text(' button to add a pump to monitor!', style: bodyTextStyle)
+    ])));
   }
 }

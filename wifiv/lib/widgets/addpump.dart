@@ -5,6 +5,7 @@ import 'package:tcp_socket_connection/tcp_socket_connection.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:lan_scanner/lan_scanner.dart';
 import 'package:network_discovery/network_discovery.dart';
+import '../constants/constants.dart';
 import 'package:network_tools/network_tools.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
@@ -17,8 +18,14 @@ const int connectionTimeout =
 class AddPumpWidget extends StatefulWidget {
   // final NetworkInfo networkInfo = NetworkInfo();
   final void Function(Pump) addPumpCallback;
+  final Set<String> currentlyConnectedPumpAddresses;
+  final void Function() onPumpSelectForConnection;
 
-  const AddPumpWidget({super.key, required this.addPumpCallback});
+  const AddPumpWidget(
+      {super.key,
+      required this.addPumpCallback,
+      required this.currentlyConnectedPumpAddresses,
+      required this.onPumpSelectForConnection});
 
   @override
   AddPumpWidgetState createState() => AddPumpWidgetState();
@@ -27,6 +34,7 @@ class AddPumpWidget extends StatefulWidget {
 class AddPumpWidgetState extends State<AddPumpWidget> {
   Map<String, TcpSocketConnection> availablePumps =
       {}; // set a timeout of 5 seconds; if this list is empty, move on from the loading screen and just say there aren't any pumps available
+  OverlayEntry? overlayEntry;
 
   @override
   void initState() {
@@ -45,9 +53,10 @@ class AddPumpWidgetState extends State<AddPumpWidget> {
         HostScanner.scanDevicesForSinglePort(subnet, controllerPort);
     stream.listen((ActiveHost host) {
       String currentPumpIp = host.internetAddress.address;
-      // print(currentPumpIp);
-      setState(() => availablePumps[currentPumpIp] =
-          TcpSocketConnection(currentPumpIp, controllerPort));
+      if (!widget.currentlyConnectedPumpAddresses.contains(currentPumpIp)) {
+        setState(() => availablePumps[currentPumpIp] =
+            TcpSocketConnection(currentPumpIp, controllerPort));
+      }
     }, onDone: () {
       print('Scan complete.');
     });
@@ -90,18 +99,20 @@ class AddPumpWidgetState extends State<AddPumpWidget> {
 
   void parseReceivedPumpInfo(
       String pumpInfo, TcpSocketConnection socketToPump) {
+    OverlayState? overlayState = Overlay.of(context);
     List<String> parsedMessageData = pumpInfo.split('#');
     Map<String, dynamic> addedPumpAsJson = jsonDecode(parsedMessageData[0]);
-    Navigator.of(context).push(MaterialPageRoute(
+    overlayEntry = OverlayEntry(
         builder: (context) =>
             PatientNamePopup(onSubmitCallback: (String inputPatientName) {
               addedPumpAsJson['patientName'] = inputPatientName;
               // print(Pump.fromMap(addedPumpAsJson));
               widget.addPumpCallback(Pump.fromMap(addedPumpAsJson));
-              Navigator.of(context).pop();
-              Navigator.of(context).pop(); // ? close add pump widget too?
+              widget.onPumpSelectForConnection();
+              overlayEntry!.remove();
               socketToPump.disconnect();
-            })));
+            }));
+    overlayState.insert(overlayEntry!);
   }
 
   void connectToPump(String pumpIp) async {
@@ -114,7 +125,8 @@ class AddPumpWidgetState extends State<AddPumpWidget> {
     } else {
       print('Pump at IP $pumpIp is open for connection!');
       socket.enableConsolePrint(true);
-      await socket.connect(connectionTimeout, (String message) => parseReceivedPumpInfo(message, socket));
+      await socket.connect(connectionTimeout,
+          (String message) => parseReceivedPumpInfo(message, socket));
       // parseReceivedPumpInfo('');
       // ! remember to disconnect sockets when we're done with them
     }
@@ -122,11 +134,22 @@ class AddPumpWidgetState extends State<AddPumpWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        body: ListView(scrollDirection: Axis.vertical, children: [
-      for (String e in availablePumps.keys)
-        AvailablePumpButton(pumpIp: e, connectToPumpCallback: connectToPump)
-    ]));
+    return Material(
+        color: const Color.fromARGB(200, 39, 44, 59),
+        child: Container(
+            padding: const EdgeInsets.all(minButtonPadding),
+            decoration: const BoxDecoration(
+                color: themeOverlay,
+                borderRadius: BorderRadius.all(
+                    Radius.circular(fieldCornerRadiusOnPhone))),
+            child: Column(
+                // scrollDirection: Axis.vertical,
+                // shrinkWrap: true,
+                children: [
+                  for (String e in availablePumps.keys)
+                    AvailablePumpButton(
+                        pumpIp: e, connectToPumpCallback: connectToPump)
+                ])));
   }
 }
 
@@ -139,11 +162,26 @@ class AvailablePumpButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-        height: 100,
+    return SizedBox(
+        width: minButtonWidthOnPhone,
+        height: buttonHeightOnPhone,
         child: TextButton(
             onPressed: () => connectToPumpCallback(pumpIp),
-            child: Text(pumpIp)));
+            style: ButtonStyle(
+                minimumSize: const MaterialStatePropertyAll(
+                    Size(minButtonWidthOnPhone, buttonHeightOnPhone)),
+                fixedSize: const MaterialStatePropertyAll(
+                    Size(minButtonWidthOnPhone, buttonHeightOnPhone)),
+                maximumSize: const MaterialStatePropertyAll(
+                    Size(minButtonWidthOnPhone, buttonHeightOnPhone)),
+                foregroundColor: const MaterialStatePropertyAll(Colors.white),
+                textStyle: const MaterialStatePropertyAll(bodyTextStyle),
+                shape: MaterialStatePropertyAll(RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.circular(buttonCornerRadiusOnPhone))),
+                padding: const MaterialStatePropertyAll(
+                    EdgeInsets.all(minButtonPadding))),
+            child: Text(pumpIp.substring(pumpIp.lastIndexOf('.') + 1))));
   }
 }
 
@@ -154,8 +192,10 @@ class PatientNamePopup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        body: Column(children: [SizedBox(height: 200), Container(
-            height: 100, child: TextField(onSubmitted: onSubmitCallback))]));
+    return Material(
+        child: Column(children: [
+      SizedBox(height: 200),
+      Container(height: 100, child: TextField(onSubmitted: onSubmitCallback))
+    ]));
   }
 }

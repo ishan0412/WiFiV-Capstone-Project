@@ -10,8 +10,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // KeyValueService keyValueStore = await KeyValueService.openKeyValueStore();
   // keyValueStore.setCurrentlyActivePumpId(1);
-  // DataService database = await DataService.connectToDatabase();
-  // database.clearDatabase();
+  DataService database = await DataService.connectToDatabase();
+  database.clearDatabase();
   // Pump testPump = Pump(
   //     id: 1,
   //     ipAddress: '192.168.224.40',

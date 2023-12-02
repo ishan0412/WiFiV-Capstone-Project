@@ -5,3 +5,4 @@ const double buttonCornerRadiusScale = 0.5;
 const double buttonCornerRadiusOnPhone = 21; // 42 * 0.5
 const double fieldCornerRadiusScale = 0.0833; // 1/12
 const double fieldCornerRadiusOnPhone = 10.667; // 128 * 1/12
+const double numPadButtonSize = 60;

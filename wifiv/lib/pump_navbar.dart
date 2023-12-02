@@ -24,6 +24,7 @@ class PumpNavBar extends StatefulWidget {
 class PumpNavBarState extends State<PumpNavBar> {
   List<Pump> pumpList;
   int currentlyActivePumpId;
+  OverlayEntry? overlayEntry;
 
   PumpNavBarState(this.pumpList, this.currentlyActivePumpId);
 
@@ -33,6 +34,21 @@ class PumpNavBarState extends State<PumpNavBar> {
       currentlyActivePumpId = addedPump.id;
     });
     widget.addPumpCallback(addedPump);
+  }
+
+  void openAddPumpWidget(BuildContext context) {
+    OverlayState? overlayState = Overlay.of(context);
+    overlayEntry = OverlayEntry(
+        builder: (context) => Positioned(
+            child: AddPumpWidget(
+                addPumpCallback: addPump,
+                currentlyConnectedPumpAddresses: {
+                  for (Pump e in pumpList) e.ipAddress
+                },
+                onPumpSelectForConnection: () => overlayEntry!.remove()
+                // propsPassed: propsToPass,
+                )));
+    overlayState.insert(overlayEntry!);
   }
 
   @override
@@ -53,24 +69,22 @@ class PumpNavBarState extends State<PumpNavBar> {
     base.add(SizedBox(
         width: buttonHeightOnPhone,
         child: Container(
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: themeGreen),
-          child: IconButton(
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                builder: (context) => AddPumpWidget(addPumpCallback: addPump))),
-            alignment: Alignment.center, 
-            style: const ButtonStyle(
-                backgroundColor: MaterialStatePropertyAll(themeGreen),
-                foregroundColor: MaterialStatePropertyAll(Colors.white),
-                // textStyle: MaterialStatePropertyAll(TextStyle(
-                //     fontWeight: FontWeight.bold,
-                //     fontSize: buttonHeightOnPhone - 2 * minButtonPadding)),
-                shape: MaterialStatePropertyAll(CircleBorder()),
-                fixedSize: MaterialStatePropertyAll(
-                    Size(buttonHeightOnPhone, buttonHeightOnPhone))),
-            color: themeGreen,
-            icon: const Icon(Icons.add, color: Colors.white, size: 22)))));
+            decoration:
+                const BoxDecoration(shape: BoxShape.circle, color: themeGreen),
+            child: IconButton(
+                onPressed: () => openAddPumpWidget(context),
+                alignment: Alignment.center,
+                style: const ButtonStyle(
+                    backgroundColor: MaterialStatePropertyAll(themeGreen),
+                    foregroundColor: MaterialStatePropertyAll(Colors.white),
+                    // textStyle: MaterialStatePropertyAll(TextStyle(
+                    //     fontWeight: FontWeight.bold,
+                    //     fontSize: buttonHeightOnPhone - 2 * minButtonPadding)),
+                    shape: MaterialStatePropertyAll(CircleBorder()),
+                    fixedSize: MaterialStatePropertyAll(
+                        Size(buttonHeightOnPhone, buttonHeightOnPhone))),
+                color: themeGreen,
+                icon: const Icon(Icons.add, color: Colors.white, size: 22)))));
     return Row(children: base);
   }
 }
