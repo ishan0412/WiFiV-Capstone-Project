@@ -52,7 +52,11 @@ class PumpNavBarState extends State<PumpNavBar> {
     }
     base.add(SizedBox(
         width: buttonHeightOnPhone,
-        child: IconButton(
+        child: Container(
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            color: themeGreen),
+          child: IconButton(
             onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                 builder: (context) => AddPumpWidget(addPumpCallback: addPump))),
             alignment: Alignment.center, 
@@ -65,7 +69,8 @@ class PumpNavBarState extends State<PumpNavBar> {
                 shape: MaterialStatePropertyAll(CircleBorder()),
                 fixedSize: MaterialStatePropertyAll(
                     Size(buttonHeightOnPhone, buttonHeightOnPhone))),
-            icon: Icon(Icons.add, size: 22))));
+            color: themeGreen,
+            icon: const Icon(Icons.add, color: Colors.white, size: 22)))));
     return Row(children: base);
   }
 }
