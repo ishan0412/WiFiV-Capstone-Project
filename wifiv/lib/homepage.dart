@@ -327,16 +327,31 @@ class MainPageState extends State<MainPage> {
         Row(
           children: [
             BloodPressureInfoWidget(
-                child: Text('${currentMeanArterialPressure.round()}',
-                    style: headingTextStyle)),
+                child: Align(
+                    alignment: Alignment.topCenter,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('MAP', style: bodyTextStyle),
+                        Text('${currentMeanArterialPressure.round()}',
+                            style: headingTextStyle)
+                      ],
+                    ))),
             const SizedBox(width: minMarginBtwnAdjElems),
             BloodPressureInfoWidget(
                 child: Column(children: [
-              Text('${currentSystolicPressure.round()}',
-                  style: headingTextStyle),
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                const Text('SYS', style: bodyTextStyle),
+                Text('${currentSystolicPressure.round()}',
+                    style: headingTextStyle)
+              ]),
               const SizedBox(height: minMarginBtwnAdjElems),
-              Text('${currentDiastolicPressure.round()}',
-                  style: headingTextStyle)
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,children: [
+                const Text('DIA', style: bodyTextStyle),
+                Text('${currentDiastolicPressure.round()}',
+                    style: headingTextStyle)
+              ]),
+              Expanded(child: Image.asset('assets/output-onlinegiftools.gif'))
             ])),
           ],
         )
@@ -496,14 +511,15 @@ class BloodPressureInfoWidgetState extends State<BloodPressureInfoWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(child: Container(
-        height: numberInputMinSizeOnPhone,
-        padding: const EdgeInsets.all(minOverlayHorizontalPadding),
-        decoration: const BoxDecoration(
-            color: themeOverlay,
-            borderRadius:
-                BorderRadius.all(Radius.circular(fieldCornerRadiusOnPhone))),
-        child: widget.child));
+    return Expanded(
+        child: Container(
+            height: numberInputMinSizeOnPhone,
+            padding: const EdgeInsets.all(minOverlayHorizontalPadding),
+            decoration: const BoxDecoration(
+                color: themeOverlay,
+                borderRadius: BorderRadius.all(
+                    Radius.circular(fieldCornerRadiusOnPhone))),
+            child: widget.child));
   }
 }
 
