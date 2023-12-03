@@ -516,7 +516,81 @@ class MainPageState extends State<MainPage> {
           const Text('BLOOD PRESSURE', style: headingTextStyle),
           const Expanded(child: SizedBox()),
           CtaButton(
-              onPressed: () => currentMapTimeSeries.toLineChart(),
+              onPressed: () {
+                Excel outputFile = Excel.createExcel();
+                Sheet currentSheet = outputFile.sheets['Sheet1']!;
+                currentSheet.updateCell(
+                    CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0),
+                    const TextCellValue('date'));
+                currentSheet.updateCell(
+                    CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 0),
+                    const TextCellValue('time'));
+                currentSheet.updateCell(
+                    CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: 0),
+                    const TextCellValue('rate'));
+                currentSheet.updateCell(
+                    CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: 0),
+                    const TextCellValue('vtbi'));
+                for (int index = 0;
+                    index <
+                        widget.database[widget.currentlyActivePumpId]!
+                            .pumpChangeLog.length;
+                    index += 2) {
+                  PumpChangeEntry currentEntry = widget
+                      .database[widget.currentlyActivePumpId]!
+                      .pumpChangeLog[index];
+                  int excelRow = index ~/ 2 + 1;
+                  currentSheet.updateCell(
+                      CellIndex.indexByColumnRow(
+                          columnIndex: 0, rowIndex: excelRow),
+                      TextCellValue(currentEntry.dateOfChange));
+                  currentSheet.updateCell(
+                      CellIndex.indexByColumnRow(
+                          columnIndex: 1, rowIndex: excelRow),
+                      TextCellValue(currentEntry.timeOfChange));
+                  currentSheet.updateCell(
+                      CellIndex.indexByColumnRow(
+                          columnIndex: 2, rowIndex: excelRow),
+                      TextCellValue('${currentEntry.updatedRate}'));
+                  currentSheet.updateCell(
+                      CellIndex.indexByColumnRow(
+                          columnIndex: 3, rowIndex: excelRow),
+                      TextCellValue('${currentEntry.updatedVtbi}'));
+                }
+                String fileName =
+                    '${widget.database[widget.currentlyActivePumpId]!.patientName}-pump-change-log.xlsx';
+                List<int> fileAsBytes = outputFile.save(fileName: fileName)!;
+                OverlayState? overlayState = Overlay.of(context);
+                overlayEntry = OverlayEntry(
+                    builder: (context) => Positioned(
+                            child: PopupContainer(
+                                child: Column(children: [
+                          Text(
+                              'Export ${widget.database[widget.currentlyActivePumpId]!.patientName}\'s pump settings history to Excel?',
+                              style: bodyTextStyle),
+                          const SizedBox(height: 12),
+                          Row(
+                            // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Expanded(child: SizedBox()),
+                              TextButton(
+                                  onPressed: closeCurrOverlay,
+                                  style: grayButtonStyle,
+                                  child: const Text('No')),
+                              const SizedBox(width: minMarginBtwnAdjElems),
+                              TextButton(
+                                  onPressed: () {
+                                    File(fileName)
+                                        .writeAsBytes(fileAsBytes, flush: true);
+                                    closeCurrOverlay();
+                                  },
+                                  style: ctaButtonStyle,
+                                  child: const Text('Yes'))
+                            ],
+                          )
+                        ]))));
+                overlayState.insert(overlayEntry!);
+              },
               buttonText: 'Log'),
         ]),
         const SizedBox(height: minMarginBtwnAdjElems),

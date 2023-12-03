@@ -84,7 +84,7 @@ class PumpNavBarState extends State<PumpNavBar> {
                     fixedSize: MaterialStatePropertyAll(
                         Size(buttonHeightOnPhone, buttonHeightOnPhone))),
                 color: themeGreen,
-                icon: const Icon(Icons.add, color: Colors.white, size: 22)))));
+                icon: const Icon(Icons.add, color: Colors.white, size: 18)))));
     return Row(children: base);
   }
 }

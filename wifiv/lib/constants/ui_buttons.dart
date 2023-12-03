@@ -6,11 +6,11 @@ import 'constants.dart'; // circular import?
 ButtonStyle ctaButtonStyle = ButtonStyle(
     // TODO: Make sizes adaptive!
     minimumSize: const MaterialStatePropertyAll(
-        Size(minButtonWidthOnPhone, buttonHeightOnPhone)),
+        Size(reducedButtonWidthOnPhone, buttonHeightOnPhone)),
     fixedSize: const MaterialStatePropertyAll(
-        Size(minButtonWidthOnPhone, buttonHeightOnPhone)),
+        Size(reducedButtonWidthOnPhone, buttonHeightOnPhone)),
     maximumSize: const MaterialStatePropertyAll(
-        Size(minButtonWidthOnPhone, buttonHeightOnPhone)),
+        Size(reducedButtonWidthOnPhone, buttonHeightOnPhone)),
     backgroundColor: const MaterialStatePropertyAll(themeGreen),
     foregroundColor: const MaterialStatePropertyAll(Colors.white),
     textStyle: const MaterialStatePropertyAll(bodyTextStyle),
@@ -21,11 +21,11 @@ ButtonStyle ctaButtonStyle = ButtonStyle(
 ButtonStyle grayButtonStyle = ButtonStyle(
     // TODO: Make sizes adaptive!
     minimumSize: const MaterialStatePropertyAll(
-        Size(minButtonWidthOnPhone, buttonHeightOnPhone)),
+        Size(reducedButtonWidthOnPhone, buttonHeightOnPhone)),
     fixedSize: const MaterialStatePropertyAll(
-        Size(minButtonWidthOnPhone, buttonHeightOnPhone)),
+        Size(reducedButtonWidthOnPhone, buttonHeightOnPhone)),
     maximumSize: const MaterialStatePropertyAll(
-        Size(minButtonWidthOnPhone, buttonHeightOnPhone)),
+        Size(reducedButtonWidthOnPhone, buttonHeightOnPhone)),
     backgroundColor: const MaterialStatePropertyAll(themeGray),
     foregroundColor: const MaterialStatePropertyAll(Colors.white),
     textStyle: const MaterialStatePropertyAll(bodyTextStyle),

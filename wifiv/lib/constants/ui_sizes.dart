@@ -1,4 +1,4 @@
-const double buttonHeightOnPhone = 42; // 48?
+const double buttonHeightOnPhone = 36; // 48?
 const double minButtonWidthOnPhone = 92; // minTabWithOnPhone
 const double reducedButtonWidthOnPhone = 72;
 const double numberInputMinSizeOnPhone = 128; // displaysMinSizeOnPhone

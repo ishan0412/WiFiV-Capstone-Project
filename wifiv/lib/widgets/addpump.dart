@@ -272,7 +272,8 @@ class PatientNamePopup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final TextEditingController patientNameInputController = TextEditingController();
+    final TextEditingController patientNameInputController =
+        TextEditingController();
     return Scaffold(
         backgroundColor: const Color.fromARGB(200, 39, 44, 59),
         body: BackdropFilter(
