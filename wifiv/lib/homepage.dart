@@ -6,6 +6,9 @@ import 'data/data_model.dart';
 import 'widgets/custom_number_input.dart';
 import 'pump_navbar.dart';
 import 'package:tcp_socket_connection/tcp_socket_connection.dart';
+import 'widgets/popup_container.dart';
+// import 'package:fl_chart/fl_chart.dart';
+import 'widgets/map_linechart.dart';
 // import 'dart:math' show min;
 import 'constants/constants.dart';
 
@@ -17,6 +20,7 @@ class MainPage extends StatefulWidget {
   Map<int, Pump> database;
   Map<int, List<double>> bloodPressureStorage = {};
   Map<int, TcpSocketConnection> socketsByPumpId = {};
+  MapChangeDatabase mapChangeDatabase = MapChangeDatabase();
   int currentlyActivePumpId;
   final void Function(int, double) setPumpDripRateCallback;
   final void Function(int, double) setPumpVtbiCallback;
@@ -40,8 +44,9 @@ class MainPage extends StatefulWidget {
         ? MainPageState(
             database[currentlyActivePumpId]!.drugName,
             database[currentlyActivePumpId]!.currentRate,
-            database[currentlyActivePumpId]!.currentVtbi)
-        : MainPageState('', -1, -1);
+            database[currentlyActivePumpId]!.currentVtbi,
+            MapTimeSeries(currentlyActivePumpId))
+        : MainPageState('', -1, -1, MapTimeSeries(currentlyActivePumpId));
   }
 }
 
@@ -52,11 +57,12 @@ class MainPageState extends State<MainPage> {
   double currentSystolicPressure = 0;
   double currentDiastolicPressure = 0;
   double currentMeanArterialPressure = 0;
+  MapTimeSeries currentMapTimeSeries;
   bool pageIsInactive = false;
   OverlayEntry? overlayEntry;
 
   MainPageState(this.currentlyActivePumpDrugName, this.currentlyActivePumpRate,
-      this.currentlyActivePumpVtbi);
+      this.currentlyActivePumpVtbi, this.currentMapTimeSeries);
 
   @override
   void initState() {
@@ -148,6 +154,9 @@ class MainPageState extends State<MainPage> {
         currentMeanArterialPressure =
             widget.bloodPressureStorage[selectedPumpId]![2];
       }
+      currentMapTimeSeries =
+          widget.mapChangeDatabase.getByPumpId(selectedPumpId) ??
+              MapTimeSeries(selectedPumpId);
     });
     widget.currentlyActivePumpId = selectedPumpId;
     widget.selectPumpCallback(selectedPumpId);
@@ -190,6 +199,8 @@ class MainPageState extends State<MainPage> {
             .split(' ')
             .map((e) => double.parse(e))
             .toList();
+        widget.mapChangeDatabase.updateMapForPumpId(
+            widget.bloodPressureStorage[updatedPump.id]![2], updatedPump.id);
         if (updatedPump.id == widget.currentlyActivePumpId) {
           setState(() {
             currentlyActivePumpDrugName =
@@ -204,6 +215,8 @@ class MainPageState extends State<MainPage> {
                 widget.bloodPressureStorage[updatedPump.id]![1];
             currentMeanArterialPressure =
                 widget.bloodPressureStorage[updatedPump.id]![2];
+            currentMapTimeSeries =
+                currentMapTimeSeries.updateMap(currentMeanArterialPressure);
           });
         }
         widget.reloadPumpCallback(updatedPump);
@@ -242,6 +255,8 @@ class MainPageState extends State<MainPage> {
     if (widget.database.containsKey(targetPumpId)) {
       widget.bloodPressureStorage[targetPumpId] =
           parsedUpdateInfo.sublist(2, 5).map((e) => double.parse(e)).toList();
+      widget.mapChangeDatabase.updateMapForPumpId(
+          widget.bloodPressureStorage[targetPumpId]![2], targetPumpId);
       double updatedValue = double.parse(
           parsedUpdateInfo[1].substring(0, parsedUpdateInfo[1].length - 1));
       if (targetSetting == 'r') {
@@ -255,6 +270,8 @@ class MainPageState extends State<MainPage> {
                 widget.bloodPressureStorage[targetPumpId]![1];
             currentMeanArterialPressure =
                 widget.bloodPressureStorage[targetPumpId]![2];
+            currentMapTimeSeries =
+                currentMapTimeSeries.updateMap(currentMeanArterialPressure);
           });
         }
         widget.database[targetPumpId] =
@@ -272,16 +289,70 @@ class MainPageState extends State<MainPage> {
     }
   }
 
-  void suggestRateChange() {
-    if (currentMeanArterialPressure > 0) {
-      if (currentMeanArterialPressure < 65) {
-        print(currentlyActivePumpRate + 2);
-      } else {
-        print(0);
-      }
+  double? suggestRateChange() {
+    if (currentMeanArterialPressure == 0) {
+      return null;
+    }
+    switch (currentlyActivePumpDrugName) {
+      case 'EPINEPHRINE':
+        return (currentMeanArterialPressure < 65)
+            ? (currentlyActivePumpRate + 3.75)
+            : 0;
+      case 'NIPRIDE':
+        return (currentMeanArterialPressure > 75)
+            ? (currentlyActivePumpRate + 2.25)
+            : 0;
+      case 'VASOPRESSIN':
+        return (currentMeanArterialPressure < 65)
+            ? (currentlyActivePumpRate + 3)
+            : 0;
+      default:
+        return null;
     }
   }
 
+  void openSuggestionPopupWidget(BuildContext context) {
+    OverlayState? overlayState = Overlay.of(context);
+    overlayEntry = OverlayEntry(
+        builder: (context) => Positioned(
+                child: PopupContainer(
+                    child: Center(
+                        child: Column(children: [
+              RichText(
+                  text: TextSpan(children: [
+                TextSpan(
+                    text:
+                        'Update ${widget.database[widget.currentlyActivePumpId]!.patientName}\'s ${currentlyActivePumpDrugName.toLowerCase()} drip rate to ',
+                    style: bodyTextStyle),
+                TextSpan(
+                    text: '${suggestRateChange()}', style: headingTextStyle),
+                const TextSpan(text: ' mL/hr?', style: bodyTextStyle)
+              ])),
+              const SizedBox(height: minMarginBtwnAdjElems),
+              Row(
+                // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Expanded(child: SizedBox()),
+                  TextButton(
+                      onPressed: closeCurrOverlay,
+                      style: grayButtonStyle,
+                      child: const Text('No')),
+                  const SizedBox(width: minMarginBtwnAdjElems),
+                  TextButton(
+                      onPressed: () {
+                        double? suggestedDripRate = suggestRateChange();
+                        if (suggestedDripRate != null) {
+                          setPumpDripRate(suggestedDripRate);
+                        }
+                        closeCurrOverlay();
+                      },
+                      style: ctaButtonStyle,
+                      child: const Text('Yes'))
+                ],
+              )
+            ])))));
+    overlayState.insert(overlayEntry!);
+  }
   // void onNumpadOpen(TitrationSettingField openedNumpadInput) {
   //   // setState(() => numpadIsOpen = true);
   //   numpadInput = OverlayEntry(builder: (context) {
@@ -350,7 +421,9 @@ class MainPageState extends State<MainPage> {
           const Expanded(child: SizedBox()),
           CtaButton(onPressed: () {}, buttonText: 'Log'),
           const SizedBox(width: minMarginBtwnAdjElems),
-          CtaButton(onPressed: () => suggestRateChange(), buttonText: 'Suggest')
+          CtaButton(
+              onPressed: () => openSuggestionPopupWidget(context),
+              buttonText: 'Suggest')
         ]),
         const SizedBox(height: minMarginBtwnAdjElems),
         setDripRateField,
@@ -363,13 +436,17 @@ class MainPageState extends State<MainPage> {
         Row(children: [
           const Text('BLOOD PRESSURE', style: headingTextStyle),
           const Expanded(child: SizedBox()),
-          CtaButton(onPressed: () {}, buttonText: 'Log'),
+          CtaButton(
+              onPressed: () => currentMapTimeSeries.toLineChart(),
+              buttonText: 'Log'),
         ]),
         const SizedBox(height: minMarginBtwnAdjElems),
         Row(
           children: [
             BloodPressureInfoWidget(
-                child: Align(
+                child: Column(
+              children: [
+                Align(
                     alignment: Alignment.topCenter,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -378,7 +455,14 @@ class MainPageState extends State<MainPage> {
                         Text('${currentMeanArterialPressure.round()}',
                             style: headingTextStyle)
                       ],
-                    ))),
+                    )),
+                // Text(currentMapTimeSeries.toString())
+                const SizedBox(height: minMarginBtwnAdjElems),
+                Expanded(
+                    child:
+                        MapLineChart(data: currentMapTimeSeries.toLineChart()))
+              ],
+            )),
             const SizedBox(width: minMarginBtwnAdjElems),
             BloodPressureInfoWidget(
                 child: Column(children: [
@@ -393,7 +477,9 @@ class MainPageState extends State<MainPage> {
                 Text('${currentDiastolicPressure.round()}',
                     style: headingTextStyle)
               ]),
-              // Expanded(child: Image.asset('assets/output-onlinegiftools (5).gif'))
+              // const SizedBox(height: minMarginBtwnAdjElems),
+              Expanded(
+                  child: Image.asset('assets/output-onlinegiftools (5).gif'))
             ])),
           ],
         )
@@ -409,7 +495,13 @@ class MainPageState extends State<MainPage> {
     // if (numpadIsOpen) {
     //   onNumpadOpen(setDripRateField);
     // }
-    return base;
+    return DecoratedBox(
+        decoration: const BoxDecoration(
+            image: DecorationImage(
+                image: AssetImage(
+                    'assets/app-background-sunset-darkest-colder-3.png'),
+                fit: BoxFit.fill)),
+        child: base);
 
     // return (numpadIsOpen
     //     ? Stack(children: [base, Container(color: Colors.white70)])

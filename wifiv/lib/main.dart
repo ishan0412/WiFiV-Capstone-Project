@@ -10,8 +10,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // KeyValueService keyValueStore = await KeyValueService.openKeyValueStore();
   // keyValueStore.setCurrentlyActivePumpId(1);
-  DataService database = await DataService.connectToDatabase();
-  database.clearDatabase();
+  // DataService database = await DataService.connectToDatabase();
+  // database.clearDatabase();
   // Pump testPump = Pump(
   //     id: 1,
   //     ipAddress: '192.168.224.40',
@@ -82,13 +82,7 @@ class MyAppState extends State<MyApp> {
             keyValueStore.getCurrentlyActivePumpId()
           ]),
           builder: (context, snapshot) {
-            return DecoratedBox(
-                decoration: const BoxDecoration(
-                    image: DecorationImage(
-                        image: AssetImage(
-                            'assets/app-background-sunset-darkest-colder-2.png'),
-                        fit: BoxFit.cover)),
-                child: ((snapshot.hasData)
+            return ((snapshot.hasData)
                     ? MainPage(
                         database: snapshot.data![0] as Map<int, Pump>,
                         currentlyActivePumpId: snapshot.data![1] as int,
@@ -97,7 +91,7 @@ class MyAppState extends State<MyApp> {
                         reloadPumpCallback: updatePumpOnlyRateAndVtbi,
                         selectPumpCallback: selectPump,
                         addPumpCallback: addPump)
-                    : const StartupLoadingScreen()));
+                    : const StartupLoadingScreen());
           },
         );
       },
@@ -110,6 +104,12 @@ class StartupLoadingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Text('Loading...');
+    return const DecoratedBox(
+                decoration: BoxDecoration(
+                    image: DecorationImage(
+                        image: AssetImage(
+                            'assets/app-background-sunset-darkest-colder-2.png'),
+                        fit: BoxFit.cover)),
+                child: Text('Loading...', style: bodyTextStyle));
   }
 }

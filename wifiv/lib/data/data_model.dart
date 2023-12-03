@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:fl_chart/fl_chart.dart';
 
 class Pump {
   final int id;
@@ -145,5 +146,66 @@ class PumpChangeEntry {
         timeOfChange: entryAsMap['timeOfChange'],
         updatedRate: entryAsMap['updatedRate'],
         updatedVtbi: entryAsMap['updatedVtbi']);
+  }
+}
+
+class MapTimeSeries {
+  Map<DateTime, double> mapChangesByTimestamp = {};
+  int pumpId;
+
+  MapTimeSeries(this.pumpId);
+
+  MapTimeSeries updateMap(double updatedMap) {
+    mapChangesByTimestamp[DateTime.now()] = updatedMap;
+    return this;
+  }
+
+  List<FlSpot> toLineChart() {
+    DateTime timeRange = DateTime.now().subtract(const Duration(hours: 2));
+    List<FlSpot> datapoints = [];
+    // DateTime timeRange = DateTime.now().subtract(const Duration(minutes: 2));
+    for (MapEntry<DateTime, double> entry in mapChangesByTimestamp.entries) {
+      if (entry.key.isAfter(timeRange)) {
+        datapoints.add(FlSpot(
+            entry.key.difference(timeRange).inMinutes.toDouble(), entry.value));
+      }
+    }
+    print(datapoints);
+    return datapoints;
+  }
+
+  @override
+  String toString() {
+    return [
+      for (MapEntry<DateTime, double> entry in mapChangesByTimestamp.entries)
+        '${entry.key}: ${entry.value}'
+    ].join();
+  }
+}
+
+class MapChangeDatabase {
+  Map<int, MapTimeSeries> mapTimeSeriesByPumpId = {};
+
+  // MapChangeDatabase(Map<int, int> initialMapValuesByPumpId) {
+  //   for (MapEntry<int, int> entry in initialMapValuesByPumpId.entries) {
+  //     mapTimeSeriesByPumpId[entry.key] =
+  //         MapTimeSeries(entry.key).updateMap(entry.value);
+  //   }
+  // }
+
+  MapChangeDatabase();
+
+  void updateMapForPumpId(double updatedMap, int pumpId) {
+    if (mapTimeSeriesByPumpId.containsKey(pumpId)) {
+      mapTimeSeriesByPumpId[pumpId] =
+          mapTimeSeriesByPumpId[pumpId]!.updateMap(updatedMap);
+    } else {
+      mapTimeSeriesByPumpId[pumpId] =
+          MapTimeSeries(pumpId).updateMap(updatedMap);
+    }
+  }
+
+  MapTimeSeries? getByPumpId(int pumpId) {
+    return mapTimeSeriesByPumpId[pumpId];
   }
 }

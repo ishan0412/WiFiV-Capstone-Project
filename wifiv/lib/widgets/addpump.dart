@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 // import 'dart:io';
 // import 'dart:js_util';
 import 'package:tcp_socket_connection/tcp_socket_connection.dart';
@@ -20,12 +21,14 @@ class AddPumpWidget extends StatefulWidget {
   final void Function(Pump) addPumpCallback;
   final Set<String> currentlyConnectedPumpAddresses;
   final void Function() onPumpSelectForConnection;
+  final void Function() onClose;
 
   const AddPumpWidget(
       {super.key,
       required this.addPumpCallback,
       required this.currentlyConnectedPumpAddresses,
-      required this.onPumpSelectForConnection});
+      required this.onPumpSelectForConnection,
+      required this.onClose});
 
   @override
   AddPumpWidgetState createState() => AddPumpWidgetState();
@@ -35,6 +38,7 @@ class AddPumpWidgetState extends State<AddPumpWidget> {
   Map<String, TcpSocketConnection> availablePumps =
       {}; // set a timeout of 5 seconds; if this list is empty, move on from the loading screen and just say there aren't any pumps available
   OverlayEntry? overlayEntry;
+  bool anyPumpsAvailable = true;
 
   @override
   void initState() {
@@ -59,6 +63,10 @@ class AddPumpWidgetState extends State<AddPumpWidget> {
       }
     }, onDone: () {
       print('Scan complete.');
+      if (availablePumps.isEmpty &&
+          widget.currentlyConnectedPumpAddresses.isEmpty) {
+        setState(() => anyPumpsAvailable = false);
+      }
     });
     // List<String> pumpIpsInNetwork = [];
     // stream.listen((ActiveHost host) async {
@@ -103,15 +111,16 @@ class AddPumpWidgetState extends State<AddPumpWidget> {
     List<String> parsedMessageData = pumpInfo.split('#');
     Map<String, dynamic> addedPumpAsJson = jsonDecode(parsedMessageData[0]);
     overlayEntry = OverlayEntry(
-        builder: (context) =>
-            PatientNamePopup(onSubmitCallback: (String inputPatientName) {
+        builder: (context) => PatientNamePopup(
+            onSubmitCallback: (String inputPatientName) {
               addedPumpAsJson['patientName'] = inputPatientName;
               // print(Pump.fromMap(addedPumpAsJson));
               widget.addPumpCallback(Pump.fromMap(addedPumpAsJson));
               widget.onPumpSelectForConnection();
               overlayEntry!.remove();
               socketToPump.disconnect();
-            }));
+            },
+            onCloseCallback: () => overlayEntry!.remove()));
     overlayState.insert(overlayEntry!);
   }
 
@@ -134,22 +143,89 @@ class AddPumpWidgetState extends State<AddPumpWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-        color: const Color.fromARGB(200, 39, 44, 59),
-        child: Container(
-            padding: const EdgeInsets.all(minButtonPadding),
-            decoration: const BoxDecoration(
-                color: themeOverlay,
-                borderRadius: BorderRadius.all(
-                    Radius.circular(fieldCornerRadiusOnPhone))),
-            child: Column(
-                // scrollDirection: Axis.vertical,
-                // shrinkWrap: true,
-                children: [
-                  for (String e in availablePumps.keys)
-                    AvailablePumpButton(
-                        pumpIp: e, connectToPumpCallback: connectToPump)
-                ])));
+    return Scaffold(
+        backgroundColor: const Color.fromARGB(200, 39, 44, 59),
+        body: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+            child: Container(
+                margin: const EdgeInsets.fromLTRB(screenLeftRightMargin,
+                    screenTopMargin, screenLeftRightMargin, 0),
+                child: Column(children: [
+                  Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Select a pump ID to connect to.',
+                            style: bodyTextStyle),
+                        TextButton(
+                            style: grayButtonStyle,
+                            onPressed: widget.onClose,
+                            child: const Text('Close'))
+                      ]),
+                  const SizedBox(height: minMarginBtwnAdjElems),
+                  ((widget.currentlyConnectedPumpAddresses.isNotEmpty)
+                      ? Column(children: [
+                          const Align(
+                              alignment: Alignment.centerLeft,
+                              child:
+                                  Text('CONNECTED', style: headingTextStyle)),
+                          const SizedBox(height: minMarginBtwnAdjElems),
+                          Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(minButtonPadding),
+                              decoration: const BoxDecoration(
+                                  color: themeOverlay,
+                                  borderRadius: BorderRadius.all(
+                                      Radius.circular(
+                                          fieldCornerRadiusOnPhone))),
+                              child: Column(
+                                  // scrollDirection: Axis.vertical,
+                                  // shrinkWrap: true,
+                                  children: [
+                                    for (final (index, item) in widget
+                                        .currentlyConnectedPumpAddresses
+                                        .indexed)
+                                      Container(
+                                          height: buttonHeightOnPhone,
+                                          alignment: Alignment.center,
+                                          margin: EdgeInsets.only(
+                                              bottom: (index ==
+                                                      (widget.currentlyConnectedPumpAddresses
+                                                              .length -
+                                                          1))
+                                                  ? 0
+                                                  : minMarginBtwnAdjElems),
+                                          child: Text(
+                                              item.substring(
+                                                  item.lastIndexOf('.') + 1),
+                                              style: bodyTextStyle))
+                                  ])),
+                          const SizedBox(height: minMarginBelowFields)
+                        ])
+                      : Container()),
+                  const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('AVAILABLE', style: headingTextStyle)),
+                  const SizedBox(height: minMarginBtwnAdjElems),
+                  anyPumpsAvailable
+                      ? Container(
+                          padding: const EdgeInsets.all(minButtonPadding),
+                          decoration: const BoxDecoration(
+                              color: themeOverlay,
+                              borderRadius: BorderRadius.all(
+                                  Radius.circular(fieldCornerRadiusOnPhone))),
+                          child: Column(
+                              // scrollDirection: Axis.vertical,
+                              // shrinkWrap: true,
+                              children: [
+                                for (String e in availablePumps.keys)
+                                  AvailablePumpButton(
+                                      pumpIp: e,
+                                      connectToPumpCallback: connectToPump)
+                              ]))
+                      : const Text(
+                          'There aren\'t any pumps available to connect to right now.',
+                          style: bodyTextStyle)
+                ]))));
   }
 }
 
@@ -163,17 +239,17 @@ class AvailablePumpButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-        width: minButtonWidthOnPhone,
+        // width: minButtonWidthOnPhone,
         height: buttonHeightOnPhone,
         child: TextButton(
             onPressed: () => connectToPumpCallback(pumpIp),
             style: ButtonStyle(
                 minimumSize: const MaterialStatePropertyAll(
-                    Size(minButtonWidthOnPhone, buttonHeightOnPhone)),
+                    Size.fromHeight(minButtonWidthOnPhone)),
                 fixedSize: const MaterialStatePropertyAll(
-                    Size(minButtonWidthOnPhone, buttonHeightOnPhone)),
+                    Size.fromHeight(minButtonWidthOnPhone)),
                 maximumSize: const MaterialStatePropertyAll(
-                    Size(minButtonWidthOnPhone, buttonHeightOnPhone)),
+                    Size.fromHeight(minButtonWidthOnPhone)),
                 foregroundColor: const MaterialStatePropertyAll(Colors.white),
                 textStyle: const MaterialStatePropertyAll(bodyTextStyle),
                 shape: MaterialStatePropertyAll(RoundedRectangleBorder(
@@ -187,15 +263,63 @@ class AvailablePumpButton extends StatelessWidget {
 
 class PatientNamePopup extends StatelessWidget {
   final void Function(String) onSubmitCallback;
+  final void Function() onCloseCallback;
 
-  const PatientNamePopup({super.key, required this.onSubmitCallback});
+  const PatientNamePopup(
+      {super.key,
+      required this.onSubmitCallback,
+      required this.onCloseCallback});
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-        child: Column(children: [
-      SizedBox(height: 200),
-      Container(height: 100, child: TextField(onSubmitted: onSubmitCallback))
-    ]));
+    final TextEditingController patientNameInputController = TextEditingController();
+    return Scaffold(
+        backgroundColor: const Color.fromARGB(200, 39, 44, 59),
+        body: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+            child: Container(
+                alignment: Alignment.topCenter,
+                height: 2 * minOverlayHorizontalPadding +
+                    3 * buttonHeightOnPhone +
+                    minMarginBelowFields +
+                    minMarginBtwnAdjElems,
+                margin: const EdgeInsets.fromLTRB(screenLeftRightMargin,
+                    screenTopMargin, screenLeftRightMargin, 0),
+                padding: const EdgeInsets.all(minOverlayHorizontalPadding),
+                // height: double.minPositive,
+                decoration: const BoxDecoration(
+                    color: themeOverlay,
+                    borderRadius: BorderRadius.all(
+                        Radius.circular(fieldCornerRadiusOnPhone))),
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Enter this patient\'s name.',
+                            style: bodyTextStyle),
+                        TextButton(
+                            style: grayButtonStyle,
+                            onPressed: onCloseCallback,
+                            child: const Text('Close'))
+                      ]),
+                  const SizedBox(height: minMarginBtwnAdjElems),
+                  SizedBox(
+                      height: buttonHeightOnPhone,
+                      child: TextField(
+                          onSubmitted: onSubmitCallback,
+                          controller: patientNameInputController,
+                          style: bodyTextStyle)),
+                  const SizedBox(height: minMarginBelowFields),
+                  TextButton(
+                      style: ctaButtonStyle,
+                      onPressed: () {
+                        String inputPatientName =
+                            patientNameInputController.text;
+                        print(inputPatientName);
+                        onSubmitCallback(inputPatientName);
+                        patientNameInputController.dispose();
+                      },
+                      child: const Text('Submit'))
+                ]))));
   }
 }

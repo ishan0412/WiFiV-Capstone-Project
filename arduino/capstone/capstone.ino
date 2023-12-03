@@ -23,16 +23,17 @@ int clientCount = 0;
 // int thisPumpId = -1; // lower 8 bits of IP address; if the pump didn't connect to wifi, this'll stay -1
 
 // CHANGE THESE FOR EACH PUMP:
-int thisPumpId = 4;  // unique to each pump
-String drugName = "VASOPRESSIN";
+int thisPumpId = 1;  // unique to each pump
+String drugName = "NIPRIDE";
+double maxFlowRate = 300;
 ////////////////////////////
 
 // Pump local variables:
 double currentRate = 0;
 double currentVtbi = 0;
-double systolicPressure = 70;
-double diastolicPressure = 40;
-double meanArterialPressure = 50;
+double systolicPressure = 170;
+double diastolicPressure = 120;
+double meanArterialPressure = 153;
 
 void setup() {
   Serial.begin(115200);
@@ -110,7 +111,7 @@ void loop() {
             Serial.println(meanArterialPressure);
             // valueToWrite: value of the analog pin used to control the pump
             // MOTOR CONTROL CODE HERE:
-            setMotorAnalogValue(valueToWrite);
+            setMotorAnalogValue(scaleFlowRateToVoltage(valueToWrite));
             // END CODE
           } else {
             Serial.print(" VTBI: ");
@@ -136,7 +137,7 @@ void loop() {
 
 void setMotorAnalogValue(int analogPinValue) {
   // put dosage-to-voltage conversion here:
-
+  Serial.println(analogPinValue);
   // END CODE
   
   if (analogPinValue == 0) {
@@ -164,6 +165,13 @@ void broadcastDataUpdateBy(WiFiClient updatingClient, char targetSetting) {
      // }
     // Serial.println("Broadcasted data update.");
   }
+}
+
+int scaleFlowRateToVoltage(double flowRate) {
+  if (flowRate == 0) {
+    return 0;
+  }
+  return (int) (125 * (flowRate / maxFlowRate)) + 400;
 }
 
 void sendDataAsJson(WiFiClient client) {

@@ -45,9 +45,9 @@ class PumpNavBarState extends State<PumpNavBar> {
                 currentlyConnectedPumpAddresses: {
                   for (Pump e in pumpList) e.ipAddress
                 },
-                onPumpSelectForConnection: () => overlayEntry!.remove()
+                onPumpSelectForConnection: () => overlayEntry!.remove(),
                 // propsPassed: propsToPass,
-                )));
+                onClose: () => overlayEntry!.remove())));
     overlayState.insert(overlayEntry!);
   }
 
@@ -126,6 +126,6 @@ class PumpSelectTab extends StatelessWidget {
                     borderRadius: BorderRadius.circular(
                         buttonHeightOnPhone * buttonCornerRadiusScale)))),
             onPressed: () => onPumpSelectCallback(thisPump.id),
-            child: Center(child: Text(thisPump.patientName))));
+            child: Center(child: Text((thisPump.patientName.length <= 9) ? thisPump.patientName : '${thisPump.patientName.substring(0, 6)}...'))));
   }
 }

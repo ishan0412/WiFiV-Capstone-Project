@@ -47,6 +47,7 @@ dependencies:
   sqlite3_flutter_libs: any
   path: any
   dart_ping_ios: ^2.0.1
+  fl_chart: ^0.65.0
 
 dev_dependencies:
   flutter_test:
@@ -87,12 +88,12 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
-  # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
-  #       - asset: fonts/Schyler-Italic.ttf
-  #         style: italic
+  fonts:
+    - family: Satoshi
+      fonts:
+        - asset: assets/fonts/Satoshi/Satoshi-Regular.otf
+        - asset: assets/fonts/Satoshi/Satoshi-Bold.otf
+          weight: 700
   #   - family: Trajan Pro
   #     fonts:
   #       - asset: fonts/TrajanPro.ttf
