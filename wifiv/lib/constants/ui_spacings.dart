@@ -5,3 +5,5 @@ const double minButtonPadding = 10;
 const double minMarginBelowNavBar = 64; // can be at 64 or 80?
 const double minOverlayHorizontalPadding = 20; // 16?
 const double minMarginBelowFields = 48; // same as below navbar, at least 48?
+const double reducedMarginBelowNavBar = 40;
+const double reducedMarginBelowFields = 24;

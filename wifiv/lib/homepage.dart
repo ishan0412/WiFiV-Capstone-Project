@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'data/data_model.dart';
 import 'widgets/custom_number_input.dart';
 import 'pump_navbar.dart';
 import 'package:tcp_socket_connection/tcp_socket_connection.dart';
+import 'package:excel/excel.dart';
 import 'widgets/popup_container.dart';
 // import 'package:fl_chart/fl_chart.dart';
 import 'widgets/map_linechart.dart';
@@ -419,7 +421,54 @@ class MainPageState extends State<MainPage> {
           Text(currentlyActivePumpDrugName.toUpperCase(),
               style: headingTextStyle),
           const Expanded(child: SizedBox()),
-          CtaButton(onPressed: () {}, buttonText: 'Log'),
+          CtaButton(
+              onPressed: () {
+                Excel outputFile = Excel.createExcel();
+                Sheet currentSheet = outputFile.sheets['Sheet1']!;
+                currentSheet.updateCell(
+                    CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0),
+                    const TextCellValue('date'));
+                currentSheet.updateCell(
+                    CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 0),
+                    const TextCellValue('time'));
+                currentSheet.updateCell(
+                    CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: 0),
+                    const TextCellValue('rate'));
+                currentSheet.updateCell(
+                    CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: 0),
+                    const TextCellValue('vtbi'));
+                for (int index = 0;
+                    index <
+                        widget.database[widget.currentlyActivePumpId]!
+                            .pumpChangeLog.length;
+                    index += 2) {
+                  PumpChangeEntry currentEntry = widget
+                      .database[widget.currentlyActivePumpId]!
+                      .pumpChangeLog[index];
+                  int excelRow = index ~/ 2 + 1;
+                  currentSheet.updateCell(
+                      CellIndex.indexByColumnRow(
+                          columnIndex: 0, rowIndex: excelRow),
+                      TextCellValue(currentEntry.dateOfChange));
+                  currentSheet.updateCell(
+                      CellIndex.indexByColumnRow(
+                          columnIndex: 1, rowIndex: excelRow),
+                      TextCellValue(currentEntry.timeOfChange));
+                  currentSheet.updateCell(
+                      CellIndex.indexByColumnRow(
+                          columnIndex: 2, rowIndex: excelRow),
+                      TextCellValue('${currentEntry.updatedRate}'));
+                  currentSheet.updateCell(
+                      CellIndex.indexByColumnRow(
+                          columnIndex: 3, rowIndex: excelRow),
+                      TextCellValue('${currentEntry.updatedVtbi}'));
+                }
+                String fileName =
+                    '${widget.database[widget.currentlyActivePumpId]!.patientName}-pump-change-log.xlsx';
+                List<int> fileAsBytes = outputFile.save(fileName: fileName)!;
+                File(fileName).writeAsBytes(fileAsBytes, flush: true);
+              },
+              buttonText: 'Log'),
           const SizedBox(width: minMarginBtwnAdjElems),
           CtaButton(
               onPressed: () => openSuggestionPopupWidget(context),
