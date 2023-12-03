@@ -457,10 +457,12 @@ class MainPageState extends State<MainPage> {
                       ],
                     )),
                 // Text(currentMapTimeSeries.toString())
-                const SizedBox(height: minMarginBtwnAdjElems),
+                const SizedBox(height: 20),
+                // padding: const EdgeInsets.all(minButtonPadding),
                 Expanded(
-                    child:
-                        MapLineChart(data: currentMapTimeSeries.toLineChart()))
+                    child: Center(
+                        child: MapLineChart(
+                            data: currentMapTimeSeries.toLineChart())))
               ],
             )),
             const SizedBox(width: minMarginBtwnAdjElems),

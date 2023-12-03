@@ -282,7 +282,7 @@ class PatientNamePopup extends StatelessWidget {
                 height: 2 * minOverlayHorizontalPadding +
                     3 * buttonHeightOnPhone +
                     minMarginBelowFields +
-                    minMarginBtwnAdjElems,
+                    2 * minMarginBtwnAdjElems,
                 margin: const EdgeInsets.fromLTRB(screenLeftRightMargin,
                     screenTopMargin, screenLeftRightMargin, 0),
                 padding: const EdgeInsets.all(minOverlayHorizontalPadding),
