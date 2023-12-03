@@ -466,7 +466,37 @@ class MainPageState extends State<MainPage> {
                 String fileName =
                     '${widget.database[widget.currentlyActivePumpId]!.patientName}-pump-change-log.xlsx';
                 List<int> fileAsBytes = outputFile.save(fileName: fileName)!;
-                File(fileName).writeAsBytes(fileAsBytes, flush: true);
+                OverlayState? overlayState = Overlay.of(context);
+                overlayEntry = OverlayEntry(
+                    builder: (context) => Positioned(
+                            child: PopupContainer(
+                                child: Column(children: [
+                          Text(
+                              'Export ${widget.database[widget.currentlyActivePumpId]!.patientName}\'s pump settings history to Excel?',
+                              style: bodyTextStyle),
+                          const SizedBox(height: 12),
+                          Row(
+                            // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Expanded(child: SizedBox()),
+                              TextButton(
+                                  onPressed: closeCurrOverlay,
+                                  style: grayButtonStyle,
+                                  child: const Text('No')),
+                              const SizedBox(width: minMarginBtwnAdjElems),
+                              TextButton(
+                                  onPressed: () {
+                                    File(fileName)
+                                        .writeAsBytes(fileAsBytes, flush: true);
+                                    closeCurrOverlay();
+                                  },
+                                  style: ctaButtonStyle,
+                                  child: const Text('Yes'))
+                            ],
+                          )
+                        ]))));
+                overlayState.insert(overlayEntry!);
+                // File(fileName).writeAsBytes(fileAsBytes, flush: true);
               },
               buttonText: 'Log'),
           const SizedBox(width: minMarginBtwnAdjElems),
