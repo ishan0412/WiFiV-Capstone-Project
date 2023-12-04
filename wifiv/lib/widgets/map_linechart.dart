@@ -43,7 +43,7 @@ class MapLineChart extends StatelessWidget {
                     getTitlesWidget: (value, meta) => SideTitleWidget(
                         axisSide: meta.axisSide,
                         child: ((value % 60) == 0)
-                            ? Text(DateFormat.Hm().format(DateTime.now().subtract(Duration(minutes: 120 - value.toInt()))),
+                            ? Text(DateFormat.Hm().format(DateTime.now().subtract(Duration(seconds: 120 - value.toInt()))),
                                 style: axisLabelStyle)
                             : const Text('')))),
             rightTitles: AxisTitles(

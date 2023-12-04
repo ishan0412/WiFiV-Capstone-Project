@@ -1,4 +1,5 @@
 #include <WiFi.h>
+#include <math.h>
 
 // Username and password to connect to microcontroller:
 const char* ssid = "Samsung Galaxy S10e_7644";
@@ -23,17 +24,17 @@ int clientCount = 0;
 // int thisPumpId = -1; // lower 8 bits of IP address; if the pump didn't connect to wifi, this'll stay -1
 
 // CHANGE THESE FOR EACH PUMP:
-int thisPumpId = 1;  // unique to each pump
-String drugName = "NIPRIDE";
-double maxFlowRate = 300;
+int thisPumpId = 6;  // unique to each pump
+String drugName = "NOREPINEPRHINE";
+double maxFlowRate = 40;
 ////////////////////////////
 
 // Pump local variables:
 double currentRate = 0;
 double currentVtbi = 0;
-double systolicPressure = 170;
-double diastolicPressure = 120;
-double meanArterialPressure = 153;
+double systolicPressure = 70;
+double diastolicPressure = 40;
+double meanArterialPressure = 50;
 
 void setup() {
   Serial.begin(115200);
@@ -103,10 +104,16 @@ void loop() {
           if (targetSetting == 'r') {
             Serial.print(" RATE: ");
             currentRate = valueToWrite;
-            double pressureIncrease = 0.133 * currentRate;
-            systolicPressure += pressureIncrease;
-            diastolicPressure += pressureIncrease;
-            meanArterialPressure += pressureIncrease;
+            if (valueToWrite > maxFlowRate) {
+              systolicPressure = 70;
+              diastolicPressure = 40;
+              meanArterialPressure = 50;
+            } else {
+              double pressureIncrease = 4 * 0.133 * currentRate;
+              systolicPressure += pressureIncrease;
+              diastolicPressure += pressureIncrease;
+              meanArterialPressure += pressureIncrease;
+            }
             Serial.print("MAP: ");
             Serial.println(meanArterialPressure);
             // valueToWrite: value of the analog pin used to control the pump
@@ -137,7 +144,7 @@ void loop() {
 
 void setMotorAnalogValue(int analogPinValue) {
   // put dosage-to-voltage conversion here:
-  Serial.println(analogPinValue);
+  Serial.println(min(analogPinValue, 1023));
   // END CODE
   
   if (analogPinValue == 0) {

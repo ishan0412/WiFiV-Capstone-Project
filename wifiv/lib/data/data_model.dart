@@ -161,13 +161,13 @@ class MapTimeSeries {
   }
 
   List<FlSpot> toLineChart() {
-    DateTime timeRange = DateTime.now().subtract(const Duration(hours: 2));
+    DateTime timeRange = DateTime.now().subtract(const Duration(minutes: 2));
     List<FlSpot> datapoints = [];
     // DateTime timeRange = DateTime.now().subtract(const Duration(minutes: 2));
     for (MapEntry<DateTime, double> entry in mapChangesByTimestamp.entries) {
       if (entry.key.isAfter(timeRange)) {
         datapoints.add(FlSpot(
-            entry.key.difference(timeRange).inMinutes.toDouble(), entry.value));
+            entry.key.difference(timeRange).inSeconds.toDouble(), entry.value));
       }
     }
     print(datapoints);

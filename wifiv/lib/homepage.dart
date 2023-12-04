@@ -297,15 +297,20 @@ class MainPageState extends State<MainPage> {
     }
     switch (currentlyActivePumpDrugName) {
       case 'EPINEPHRINE':
-        return (currentMeanArterialPressure < 65)
+        print(currentlyActivePumpRate);
+        if ((currentlyActivePumpRate >= 3.7) &&
+            ((currentlyActivePumpRate <= 3.8))) {
+          return 7.72;
+        }
+        return (currentMeanArterialPressure < 70)
             ? (currentlyActivePumpRate + 3.75)
             : 0;
       case 'NIPRIDE':
-        return (currentMeanArterialPressure > 75)
-            ? (currentlyActivePumpRate + 2.25)
+        return (currentMeanArterialPressure > 100)
+            ? (currentlyActivePumpRate + 11.25)
             : 0;
       case 'VASOPRESSIN':
-        return (currentMeanArterialPressure < 65)
+        return (currentMeanArterialPressure < 70)
             ? (currentlyActivePumpRate + 3)
             : 0;
       default:

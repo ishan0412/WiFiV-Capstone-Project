@@ -67,22 +67,24 @@ class MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+        debugShowCheckedModeBanner: false,
         home: Scaffold(
             body: FutureBuilder(
-      future: Future.wait([database, keyValueStore]),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const StartupLoadingScreen();
-        }
-        DataService awaitedDatabase = snapshot.data![0] as DataService;
-        KeyValueService keyValueStore = snapshot.data![1] as KeyValueService;
-        return FutureBuilder(
-          future: Future.wait([
-            awaitedDatabase.getDatabaseAsDict(),
-            keyValueStore.getCurrentlyActivePumpId()
-          ]),
+          future: Future.wait([database, keyValueStore]),
           builder: (context, snapshot) {
-            return ((snapshot.hasData)
+            if (!snapshot.hasData) {
+              return const StartupLoadingScreen();
+            }
+            DataService awaitedDatabase = snapshot.data![0] as DataService;
+            KeyValueService keyValueStore =
+                snapshot.data![1] as KeyValueService;
+            return FutureBuilder(
+              future: Future.wait([
+                awaitedDatabase.getDatabaseAsDict(),
+                keyValueStore.getCurrentlyActivePumpId()
+              ]),
+              builder: (context, snapshot) {
+                return ((snapshot.hasData)
                     ? MainPage(
                         database: snapshot.data![0] as Map<int, Pump>,
                         currentlyActivePumpId: snapshot.data![1] as int,
@@ -92,10 +94,10 @@ class MyAppState extends State<MyApp> {
                         selectPumpCallback: selectPump,
                         addPumpCallback: addPump)
                     : const StartupLoadingScreen());
+              },
+            );
           },
-        );
-      },
-    )));
+        )));
   }
 }
 
@@ -105,11 +107,11 @@ class StartupLoadingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const DecoratedBox(
-                decoration: BoxDecoration(
-                    image: DecorationImage(
-                        image: AssetImage(
-                            'assets/app-background-sunset-darkest-colder-2.png'),
-                        fit: BoxFit.cover)),
-                child: Text('Loading...', style: bodyTextStyle));
+        decoration: BoxDecoration(
+            image: DecorationImage(
+                image: AssetImage(
+                    'assets/app-background-sunset-darkest-colder-2.png'),
+                fit: BoxFit.cover)),
+        child: Text('Loading...', style: bodyTextStyle));
   }
 }
